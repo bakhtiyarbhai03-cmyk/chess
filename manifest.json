@@ -1,0 +1,18 @@
+ {
+  "name": "Advanced Premium Chess: Master Edition",
+  "short_name": "Premium Chess",
+  "description": "An advanced P2P multiplayer and Stockfish-powered offline chess client.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
