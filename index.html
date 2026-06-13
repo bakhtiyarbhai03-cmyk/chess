@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -559,12 +558,25 @@
 
     function loadCustomFEN() { var targetFEN = document.getElementById('fen-input').value.trim(); if (!targetFEN) return; if(parseFENPosition(targetFEN)) { openingBadge.innerText = "Custom Loaded State"; } }
 
-    function previewOpening(moveSequence) {
-        if (!moveSequence) return; initGame(); var processArray = moveSequence.split(" ");
+        function previewOpening(moveSequence) {
+        if (!moveSequence) return; 
+        
+        // 1. Temporarily pause the AI
+        var tempMode = currentMode; 
+        currentMode = 'pvp'; 
+        
+        initGame(); 
+        
+        // 2. Play out the opening moves instantly
         if(moveSequence === "e4 c5") { executeMove(52, 36, true); executeMove(11, 27, true); }
         if(moveSequence === "d4 d5 c4") { executeMove(51, 35, true); executeMove(11, 27, true); executeMove(50, 34, true); }
         if(moveSequence === "e4 e6") { executeMove(52, 36, true); executeMove(12, 28, true); }
         if(moveSequence === "e4 e5 Nf3 Nc6 Bb5") { executeMove(52, 36, true); executeMove(12, 28, true); executeMove(62, 45, true); executeMove(1, 18, true); executeMove(61, 26, true); }
+        
+        // 3. Restore the AI and trigger it if it's the computer's turn
+        currentMode = tempMode; 
+        if (currentMode === 'cpu' && currentPlayer !== playerColor) triggerAI();
+        
         settingsModal.style.display = 'none';
     }
 
@@ -917,9 +929,28 @@
     function startReviewSession() { isReviewMode = true; reviewIndex = reviewGameData.length - 1; gameControls.style.display = 'none'; confirmTray.style.display = 'none'; reviewControls.style.display = 'flex'; selectedIdx = null; validMoves = []; applyReviewFrame(); }
     function exitReview() { initGame(); }
     function reviewStep(step) { reviewIndex += step; if(reviewIndex < 0) reviewIndex = 0; if(reviewIndex >= reviewGameData.length) reviewIndex = reviewGameData.length - 1; applyReviewFrame(); }
-    function applyReviewFrame() { var frame = reviewGameData[reviewIndex]; board = frame.board.slice(); currentPlayer = frame.turn; lastMoveFrom = null; lastMoveTo = null; reviewBestFrom = null; reviewBestTo = null; updateUI(); }
-
-    window.addEventListener('load', function() {
+        function applyReviewFrame() { 
+        var frame = reviewGameData[reviewIndex]; 
+        board = frame.board.slice(); 
+        currentPlayer = frame.turn; 
+        lastMoveFrom = null; lastMoveTo = null; 
+        reviewBestFrom = null; reviewBestTo = null; 
+        
+        // Calculate basic material advantage for the Eval Bar
+        var wScore = 0; var bScore = 0; 
+        for(var i=0; i<64; i++) { 
+            if(board[i]) { 
+                var val = PIECE_VALUES[board[i].toLowerCase()] || 0; 
+                if(board[i] >= 'A' && board[i] <= 'Z') wScore += val; 
+                else bScore += val; 
+            } 
+        }
+        var clamped = Math.max(-15, Math.min(15, wScore - bScore)); 
+        document.getElementById('eval-fill').style.top = (50 - (clamped * 3.33)) + '%';
+        
+        updateUI(); 
+    }
+  window.addEventListener('load', function() {
         loadSettings(); updateConnectionStatus(); initGame(); initStockfish();
         if ('serviceWorker' in navigator && window.location.protocol !== 'file:') { navigator.serviceWorker.register('sw.js').catch(e => console.log(e)); }
     });
