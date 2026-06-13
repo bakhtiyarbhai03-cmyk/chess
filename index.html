@@ -541,19 +541,38 @@
         peer.on('error', function(err) { alert("Network Error: " + err.message); document.getElementById('btn-join').innerText = "⚔️ Join"; });
     }
 
-    function setupMultiplayerDataChannels() {
+        function setupMultiplayerDataChannels() {
         document.getElementById('mp-info-string').style.display = "flex";
         document.getElementById('mp-info-string').innerHTML = "<strong style='color:#2ecc71;'>Connection active!</strong>";
         document.getElementById('mp-chat-container').style.display = "flex";
         currentMode = 'network';
+        
         conn.on('data', function(data) {
-            if (data.type === 'move') { aiThinking = false; if (data.promo) board[data.from] = data.promo; executeMove(data.from, data.to, true); }
+            if (data.type === 'move') { 
+                aiThinking = false; 
+                if (data.promo) board[data.from] = data.promo; 
+                executeMove(data.from, data.to, true); 
+            }
             if (data.type === 'chat') { appendChat("Opponent", data.text); }
+            if (data.type === 'resign') { 
+                endGame((playerColor === 'white' ? "White" : "Black") + " Wins by Resignation", playerColor); 
+            }
+            if (data.type === 'draw_offer') {
+                if (confirm("Your opponent has offered a draw. Do you accept?")) {
+                    conn.send({ type: 'draw_accept' });
+                    endGame("Draw by Agreement", "draw");
+                } else {
+                    conn.send({ type: 'draw_decline' });
+                }
+            }
+            if (data.type === 'draw_accept') { endGame("Draw by Agreement", "draw"); }
+            if (data.type === 'draw_decline') { alert("Your opponent declined the draw offer."); }
         });
+        
         applySettings(); initGame();
     }
 
-    var urlParams = new URLSearchParams(window.location.search); var joinId = urlParams.get('join');
+ var urlParams = new URLSearchParams(window.location.search); var joinId = urlParams.get('join');
     if(joinId) { document.getElementById('mp-id-input').value = joinId; window.history.replaceState({}, document.title, window.location.pathname); setTimeout(joinMultiplayer, 1000); }
 
     function loadCustomFEN() { var targetFEN = document.getElementById('fen-input').value.trim(); if (!targetFEN) return; if(parseFENPosition(targetFEN)) { openingBadge.innerText = "Custom Loaded State"; } }
@@ -632,8 +651,28 @@
         document.getElementById('top-clock').innerText = topC; document.getElementById('bottom-clock').innerText = botC;
     }
 
-    function resignGame() { if(!isGameOver) endGame((playerColor==='white'?"Black":"White") + " Wins by Resignation", playerColor==='white'?'black':'white'); }
-    function offerDraw() { if (Math.abs(currentEvalScore) < 0.8) endGame("Draw by Agreement", "draw"); else alert("The AI declines the draw."); }
+        function resignGame() { 
+        if(!isGameOver) {
+            if (isMultiplayerActive && conn && conn.open) {
+                conn.send({ type: 'resign' });
+            }
+            endGame((playerColor === 'white' ? "Black" : "White") + " Wins by Resignation", playerColor === 'white' ? 'black' : 'white'); 
+        }
+    }
+    
+    function offerDraw() { 
+        if(isGameOver) return;
+        if (isMultiplayerActive && conn && conn.open) {
+            conn.send({ type: 'draw_offer' });
+            alert("Draw offer sent to opponent.");
+        } else if (currentMode === 'cpu') {
+            if (Math.abs(currentEvalScore) < 0.8) endGame("Draw by Agreement", "draw"); 
+            else alert("The AI declines the draw."); 
+        } else {
+            endGame("Draw by Agreement", "draw"); // Auto-accepts in Local Pass & Play
+        }
+    }
+
     function exportPGN() { 
         if (algebraicMoves.length === 0) return alert("No moves to export yet!");
         var pgn = "[Event \"Advanced Premium Chess Match\"]\n[Site \"Local Browser\"]\n[Date \"" + new Date().toLocaleDateString() + "\"]\n";
