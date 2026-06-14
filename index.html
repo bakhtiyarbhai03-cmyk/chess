@@ -795,12 +795,14 @@
         var tStr = String.fromCharCode(97 + (t % 8)) + (8 - Math.floor(t / 8)); var promoStr = isPromo ? "=" + isPromo.toUpperCase() : "";
         return pStr + capStr + tStr + promoStr;
     }
-
-    function executeMove(fromIdx, toIdx, autoPromote) {
+   
+   function executeMove(fromIdx, toIdx, autoPromote) {
         var p = board[fromIdx], t = p.toLowerCase(), col = getColor(p), tRow = Math.floor(toIdx / 8);
         var isCap = (board[toIdx] && board[toIdx] !== '') || (t === 'p' && toIdx === epSquare);
         var isCastle = (t === 'k' && Math.abs(fromIdx - toIdx) === 2);
-        var algMove = getAlgebraic(fromIdx, toIdx, p, isCap, autoPromote ? 'Q' : null);
+        var isPromo = (t === 'p' && (tRow === 0 || tRow === 7));
+var algMove = getAlgebraic(fromIdx, toIdx, p, isCap, (isPromo && autoPromote) ? 'Q' : null);
+
 
         reviewBestFrom = null; reviewBestTo = null;
 
