@@ -1033,10 +1033,10 @@
             </div>
         </div>
 
-        <!-- Primary Live Game Controls (Includes Working 💡 Hint / Best Move Button) -->
+                <!-- Primary Live Game Controls (Includes Working 💡 Hint / Best Move Button) -->
         <div class="controls" id="game-controls">
             <button class="action-btn" onclick="undoLastTurn()">↩️ Undo</button>
-            <button class="action-btn primary" onclick="triggerBestMoveAnalysis()">💡 Best Move</button>
+            <button class="action-btn primary" id="btn-best-move" onclick="triggerBestMoveAnalysis()">💡 Best Move</button>
             <button class="action-btn" onclick="offerDraw()">🤝 Draw</button>
             <button class="action-btn danger" onclick="resignGame()">🏳️ Resign</button>
             <button class="action-btn" onclick="initGame()">🔄 New</button>
@@ -2847,7 +2847,11 @@
     /* =========================================================================
        💡 WORKING BEST MOVE / HINT BUTTON & THREAT ANALYSIS
        ========================================================================= */
-    function triggerBestMoveAnalysis() {
+        function triggerBestMoveAnalysis() {
+        if (!isReviewMode && (isMultiplayerActive || currentMode === 'pvp')) {
+            showToast("Best Move hints are disabled in P2P mode.");
+            return;
+        }
         var activeBoard = board;
         var activeSide = currentPlayer;
         if (isReviewMode && reviewGameData[reviewIndex]) {
@@ -3499,8 +3503,15 @@
         // 5. Render 2-Column Notation Move List
         renderNotationPanel();
 
-               // 6. Render Tactical & Engine Arrows
+                      // 6. Render Tactical & Engine Arrows
         renderArrows();
+
+        // 7. Hide Best Move button in P2P / Local PvP modes
+        var bestMoveBtn = document.getElementById('btn-best-move');
+        if (bestMoveBtn) {
+            var isP2P = isMultiplayerActive || currentMode === 'pvp';
+            bestMoveBtn.style.display = isP2P ? 'none' : '';
+        }
     }
 
     function isAnalysisOrReviewActive() {
