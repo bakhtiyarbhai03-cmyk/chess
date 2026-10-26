@@ -1,7 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" fill="#0a0a0a"/>
-  <circle cx="256" cy="256" r="220" fill="#121212" stroke="#222" stroke-width="4"/>
-  <path d="M256 160v-40M230 140h52" fill="none" stroke="#ffd700" stroke-width="16" stroke-linecap="round"/>
-  <path d="M256 320c25 15 65 15 90 0v-50l30-40c10-15-10-35-25-15l-35 40v-85l-60 65-60-65v85l-35-40c-15-20-35 0-25 15l30 40v50z" fill="#ffd700" stroke="#daa520" stroke-width="4" stroke-linejoin="round"/>
-  <path d="M160 340c40-15 152-15 192 0m-192 20c40-15 152-15 192 0" fill="none" stroke="#ffd700" stroke-width="8" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e2433"/>
+      <stop offset="100%" stop-color="#0b0d13"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe066"/>
+      <stop offset="100%" stop-color="#d99b16"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#bg)" stroke="#f5c542" stroke-width="4"/>
+  <g transform="translate(16, 14) scale(2.13)">
+    <path d="M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18" fill="url(#gold)" stroke="#0b0d13" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 24,18 C 24.38,20.91 18.45,25.37 16,27 C 13,29 13.18,31.34 11,31 C 9.958,30.06 12.41,27.96 11,28 C 10,28 11.19,29.23 10,30 C 9,30 5.997,31 6,26 C 6,24 12,14 12,14 C 12,14 13.89,12.1 14,10.5 C 13.27,9.506 13.5,8.5 13.5,7.5 C 14.5,6.5 16.5,10 16.5,10 L 18.5,10 C 18.5,10 19.28,8.008 21,7 C 22,7 22,10 22,10" fill="url(#gold)" stroke="#0b0d13" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="9.5" cy="25.5" r="1" fill="#0b0d13"/>
+    <rect x="11" y="39" width="29" height="4" rx="1.5" fill="url(#gold)" stroke="#0b0d13" stroke-width="1.2"/>
+  </g>
 </svg>
