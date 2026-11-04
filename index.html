@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="logo.svg" type="image/svg+xml">
     <meta name="theme-color" content="#0b0d13">
-    <meta name="description" content="Professional P2P multiplayer, Board Setter, OCR Scanner, and Stockfish-powered offline chess suite.">
+    <meta name="description" content="Professional P2P multiplayer, Board Setter, OCR Scanner, Teacher Coach, and Stockfish-powered offline chess suite.">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
     
@@ -322,7 +322,7 @@
         .square.staged-sq::before { content: ''; position: absolute; inset: 0; background-color: var(--staged-sq); z-index: 1; }
         .square.drag-target::before { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.75); z-index: 2; }
 
-               /* Legal Move Dots & Capture Rings */
+        /* Legal Move Dots & Capture Rings */
         .move-indicator,
         .square.valid-move::after {
             content: '';
@@ -415,7 +415,7 @@
             filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.4));
         }
 
-        /* Chess.com-Style On-Board Move Badge (Top-Right of Destination Square) */
+        /* Chess.com-Style On-Board Move Badge */
         .board-move-badge {
             position: absolute;
             top: 2px;
@@ -450,46 +450,89 @@
             z-index: 5;
         }
 
-        /* Coach Commentary & Opening Strip */
+        /* Enhanced Coach Commentary & Teacher Bot Strip */
         .coach-strip {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
-            padding: 6px 10px;
+            gap: 9px;
+            background: linear-gradient(135deg, #171d2b 0%, #121620 100%);
+            border: 1px solid rgba(245, 197, 66, 0.25);
+            border-radius: 10px;
+            padding: 7px 11px;
             font-size: 0.78rem;
-            min-height: 32px;
+            min-height: 42px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
         }
         .coach-left {
             display: flex;
             align-items: center;
-            gap: 7px;
-            overflow: hidden;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+        .coach-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--panel-elevated);
+            border: 1.5px solid var(--accent);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
         }
         #coach-badge-pill {
-            font-size: 0.68rem;
+            font-size: 0.66rem;
             font-weight: 900;
-            padding: 2px 6px;
+            padding: 2px 7px;
             border-radius: 5px;
             color: #fff;
             display: none;
             flex-shrink: 0;
+            letter-spacing: 0.3px;
         }
         #coach-text {
-            color: #e2e8f0;
+            color: #f1f5f9;
             font-weight: 600;
-            white-space: nowrap;
+            line-height: 1.28;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
+        }
+        .coach-actions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        .retry-pill-btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #0b0d13;
+            border: none;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+        }
+        .voice-btn.listening {
+            border-color: #ef4444 !important;
+            color: #ef4444 !important;
+            animation: pulseClock 0.7s infinite alternate;
         }
         #fide-status-badge {
             color: var(--text-muted);
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-family: monospace;
             flex-shrink: 0;
+            background: rgba(255,255,255,0.04);
+            padding: 2px 6px;
+            border-radius: 4px;
         }
 
         .inline-banner {
@@ -539,7 +582,7 @@
             border-radius: 10px;
             padding: 8px 10px;
             min-height: 118px;
-            max-height: 175px;
+            max-height: 195px;
             overflow-y: auto;
             width: 100%;
         }
@@ -548,6 +591,47 @@
             flex-direction: column;
             gap: 6px;
         }
+
+        /* Opening Explorer Win-Rate Bars */
+        .explorer-box {
+            background: #0d1017;
+            border: 1px solid var(--border-subtle);
+            border-radius: 7px;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.72rem;
+        }
+        .explorer-header {
+            display: flex;
+            justify-content: space-between;
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 0.7rem;
+        }
+        .explorer-row {
+            display: grid;
+            grid-template-columns: 42px 1fr 78px;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .explorer-row:hover { background: rgba(255,255,255,0.07); }
+        .explorer-san { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #fff; }
+        .winrate-bar {
+            display: flex;
+            height: 11px;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .wr-w { background: #f8fafc; }
+        .wr-d { background: #64748b; }
+        .wr-b { background: #1e293b; }
+        .wr-nums { font-size: 0.64rem; color: var(--text-muted); text-align: right; font-family: monospace; }
 
         /* Structured 2-Column Notation Table */
         .notation-list {
@@ -666,7 +750,7 @@
             display: block;
         }
 
-        /* Inputs & Action Buttons */
+        /* Inputs & Horizontal Action Buttons */
         .tray-row { display: flex; gap: 5px; width: 100%; align-items: center; flex-wrap: wrap; }
         .tray-input {
             flex-grow: 1;
@@ -694,7 +778,7 @@
             gap: 3px;
         }
 
-                .controls {
+        .controls {
             display: flex !important;
             flex-direction: row;
             justify-content: space-between;
@@ -720,7 +804,6 @@
             white-space: nowrap;
             transition: filter 0.15s, transform 0.1s;
         }
-        
         button.action-btn:hover { filter: brightness(1.15); }
         button.action-btn:active { transform: scale(0.97); }
         button.action-btn.danger { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
@@ -763,7 +846,7 @@
             border: 1px solid rgba(255,255,255,0.16);
             padding: 5px 8px;
             border-radius: 6px;
-            width: 56%;
+            width: 58%;
             font-size: 0.82rem;
             outline: none;
         }
@@ -880,9 +963,10 @@
                 <div id="elo-display" class="elo-badge">⭐ 1200</div>
             </div>
             <div class="header-controls">
+                <button class="icon-btn" title="Quick Save Game State" onclick="saveCurrentGameStateSlot()">💾</button>
                 <button class="icon-btn" title="Flip Board (F)" onclick="toggleManualFlip()">🔄</button>
                 <button class="icon-btn" title="Game Review Report" onclick="openGameReviewModal()">📊</button>
-                <button class="icon-btn" title="Saved Matches" onclick="openHistory()">📋</button>
+                <button class="icon-btn" title="Saved States & Matches" onclick="openHistory()">📋</button>
                 <button class="icon-btn" title="Settings" onclick="openSettings()">⚙️</button>
             </div>
         </header>
@@ -890,7 +974,7 @@
         <!-- Top Player Card -->
         <div class="status-bar" id="top-status">
             <div class="player-left">
-                <div class="player-info"><span id="top-name">Stockfish (1600)</span></div>
+                <div class="player-info"><span id="top-name">🎓 Coach Dan (1500)</span></div>
                 <div class="captured-row">
                     <div id="top-captures" class="captured-tray"></div>
                     <span id="top-mat-adv" class="mat-adv-badge"></span>
@@ -939,14 +1023,21 @@
             <div class="clock" id="bottom-clock">--:--</div>
         </div>
 
-        <!-- Chess.com-Style Coach Commentary & FIDE Counter Strip -->
+        <!-- Chess.com-Style Teacher Coach Commentary, Retry Mistake & Voice Strip -->
         <div class="coach-strip">
             <div class="coach-left">
+                <span class="coach-avatar" id="coach-avatar">🎓</span>
                 <span id="coach-badge-pill"></span>
-                <span id="coach-text">Starting Position</span>
+                <span id="coach-text">Coach Ready: Make a move for live tactical & positional feedback!</span>
             </div>
-            <div id="fide-status-badge">50m: 0/100</div>
+            <div class="coach-actions">
+                <button id="btn-retry-mistake" class="retry-pill-btn" onclick="startRetryMistakePuzzle()">🔄 Retry</button>
+                <button id="btn-voice-tts" class="icon-btn" style="padding:3px 6px; font-size:0.78rem;" title="Toggle Voice Coach TTS" onclick="toggleVoiceCoachTTS()">🔇</button>
+                <button id="btn-voice-mic" class="icon-btn voice-btn" style="padding:3px 6px; font-size:0.78rem;" title="Speak Move (e.g. 'Knight f3')" onclick="listenForVoiceMove()">🎙️</button>
+                <div id="fide-status-badge">50m: 0/100</div>
+            </div>
         </div>
+
         <!-- Non-Blocking Inline Draw Offer Banner -->
         <div id="draw-offer-banner" class="inline-banner">
             <span>🤝 Opponent offers a draw</span>
@@ -966,13 +1057,14 @@
         <div class="tab-bar">
             <button class="tab-btn active" id="tab-btn-moves" onclick="switchTab('moves')">📜 Moves</button>
             <button class="tab-btn" id="tab-btn-analysis" onclick="switchTab('analysis')">📈 Graph</button>
-            <button class="tab-btn" id="tab-btn-setup" onclick="switchTab('setup')">🧩 Setup/OCR</button>
+            <button class="tab-btn" id="tab-btn-setup" onclick="switchTab('setup')">🧩 Setup/Drills</button>
             <button class="tab-btn" id="tab-btn-online" onclick="switchTab('online')">🌐 Online</button>
             <button class="tab-btn" id="tab-btn-fen" onclick="switchTab('fen')">🛠️ FEN/PGN</button>
         </div>
 
-        <!-- Tab 1: Structured Move Notation List -->
+        <!-- Tab 1: Live Opening Explorer + Structured Move Notation List -->
         <div class="tab-pane active" id="tab-pane-moves">
+            <div class="explorer-box" id="opening-explorer-box"></div>
             <div class="notation-list" id="notation-panel"></div>
         </div>
 
@@ -980,14 +1072,14 @@
         <div class="tab-pane" id="tab-pane-analysis">
             <canvas id="eval-graph-canvas" width="460" height="64"></canvas>
             <div class="engine-pv-bar">
-                <span id="engine-line-text" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Click 💡 Hint or any move to inspect best line.</span>
+                <span id="engine-line-text" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Click 💡 Best Move or any move to inspect best line.</span>
                 <label style="display:flex; align-items:center; gap:4px; cursor:pointer; color:#f87171; font-weight:700; flex-shrink:0;">
                     <input type="checkbox" id="toggle-threat-box" onchange="toggleThreatAnalysis(this.checked)"> 🎯 Threat
                 </label>
             </div>
         </div>
 
-        <!-- Tab 3: Custom Board Setter & Camera/Gallery OCR (Like Chess.com) -->
+        <!-- Tab 3: Custom Board Setter, Camera OCR & Endgame Trainer Drills -->
         <div class="tab-pane" id="tab-pane-setup">
             <div class="palette-grid" id="editor-palette"></div>
             <div class="tray-row" style="margin-top:2px;">
@@ -997,8 +1089,21 @@
                 </select>
                 <button class="action-btn" onclick="clearEditorBoard()" title="Clear all pieces except Kings">🧹 Clear</button>
                 <button class="action-btn" onclick="resetEditorStandard()" title="Standard starting position">♟️ Reset</button>
-                <button class="action-btn" style="background:#7c3aed; border-color:#8b5cf6;" onclick="triggerOcrUpload()">📷 Scan Image</button>
-                <button class="action-btn primary" onclick="finishEditorAndPlay()">▶️ Play Here</button>
+                <button class="action-btn" style="background:#7c3aed; border-color:#8b5cf6;" onclick="triggerOcrUpload()">📷 Scan</button>
+                <button class="action-btn primary" onclick="finishEditorAndPlay()">▶️ Play</button>
+            </div>
+            <div class="tray-row" style="margin-top:2px;">
+                <select id="endgame-drill-select" class="tray-input" onchange="if(this.value) loadEndgameDrill(this.value)">
+                    <option value="">🎯 Load Endgame Trainer Drill...</option>
+                    <option value="kqk">👑 King + Queen vs. King (Basic Mate)</option>
+                    <option value="krk">🏰 King + Rook vs. King (Box Mate)</option>
+                    <option value="kbbk">♝ Two Bishops Mate (KBB vs. K)</option>
+                    <option value="kpk">♟️ King + Pawn vs. King (Opposition)</option>
+                    <option value="lucena">🏆 Lucena Position (Winning Rook Endgame)</option>
+                    <option value="philidor">🛡️ Philidor Position (Defensive Rook Draw)</option>
+                    <option value="qvsp">⚡ Queen vs. 7th-Rank Pawn</option>
+                    <option value="ocb">⚖️ Opposite-Colored Bishops Endgame</option>
+                </select>
             </div>
             <input type="file" id="ocr-file-input" accept="image/*" style="display:none;" onchange="handleOcrFileSelect(event)">
         </div>
@@ -1021,19 +1126,23 @@
             </div>
         </div>
 
-                <!-- Tab 5: FEN Loader & Exporter -->
+        <!-- Tab 5: FEN Loader, Full PGN Importer & Annotated PGN Exporter -->
         <div class="tab-pane" id="tab-pane-fen">
             <div class="tray-row">
                 <input id="fen-input" class="tray-input" type="text" placeholder="Paste full 6-field FEN string...">
                 <button class="action-btn" style="flex-grow:0; padding:6px 11px;" onclick="loadCustomFEN()">Load FEN</button>
             </div>
             <div class="tray-row">
+                <input id="pgn-input" class="tray-input" type="text" placeholder="Paste PGN game (e.g. 1. e4 e5 2. Nf3 Nc6)...">
+                <button class="action-btn primary" style="flex-grow:0; padding:6px 11px;" onclick="importPGNGame()">Import PGN</button>
+            </div>
+            <div class="tray-row">
                 <button class="action-btn" onclick="copyCurrentFEN()">📋 Copy FEN</button>
-                <button class="action-btn" onclick="exportPGN()">📥 Download PGN</button>
+                <button class="action-btn" onclick="exportAnnotatedPGN()">📥 Download Annotated PGN</button>
             </div>
         </div>
 
-                <!-- Primary Live Game Controls (Includes Working 💡 Hint / Best Move Button) -->
+        <!-- Primary Live Game Controls (Horizontal Row; Best Move Auto-Hidden in P2P) -->
         <div class="controls" id="game-controls">
             <button class="action-btn" onclick="undoLastTurn()">↩️ Undo</button>
             <button class="action-btn primary" id="btn-best-move" onclick="triggerBestMoveAnalysis()">💡 Best Move</button>
@@ -1052,19 +1161,33 @@
             <button class="action-btn danger" onclick="exitReview()">Exit</button>
         </div>
     </div>
+
     <!-- Settings Modal (Persisted in localStorage) -->
     <div id="settings-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 style="margin-top:0; border-bottom: 1px solid var(--border-subtle); padding-bottom:8px;">Game Settings</h3>
             <div class="setting-group"><label>Play As:</label><select id="set-color"><option value="white">White</option><option value="black">Black</option><option value="random">Random</option></select></div>
-            <div class="setting-group"><label>Opponent:</label><select id="set-mode"><option value="cpu">Stockfish AI</option><option value="pvp">Local Pass & Play</option></select></div>
-            <div class="setting-group"><label>AI Strength:</label>
+            <div class="setting-group"><label>Opponent:</label><select id="set-mode"><option value="cpu">Bot / Stockfish AI</option><option value="pvp">Local Pass & Play</option></select></div>
+            <div class="setting-group"><label>Bot Opponent:</label>
                 <select id="set-difficulty">
-                    <option value="450">Beginner (450)</option>
-                    <option value="800">Casual (800)</option>
-                    <option value="1200">Club (1200)</option>
-                    <option value="1600">Tactician (1600)</option>
-                    <option value="2200">Grandmaster (2200+)</option>
+                    <option value="250">👶 Martin (250 - Beginner)</option>
+                    <option value="450">🌱 Elani (450 - Novice)</option>
+                    <option value="700">🛡️ Aron (700 - Casual)</option>
+                    <option value="1000">⚔️ Emir (1000 - Intermediate)</option>
+                    <option value="1200">🏛️ Sven (1200 - Club Solid)</option>
+                    <option value="1350">👑 Nelson (1350 - Queen Aggressor)</option>
+                    <option value="1500">🎓 Coach Dan (1500 - Teacher Bot)</option>
+                    <option value="1700">🎯 Isabel (1700 - Tactician)</option>
+                    <option value="1950">🧠 Wally (1950 - Positional)</option>
+                    <option value="2200">⚡ Li (2200 - Master)</option>
+                    <option value="2500">🔥 GM Nova (2500 - Grandmaster)</option>
+                    <option value="2800">🤖 Stockfish Max (2800+)</option>
+                </select>
+            </div>
+            <div class="setting-group"><label>Coach Feedback:</label>
+                <select id="set-coach-mode">
+                    <option value="on">🎓 On (Live Move Teaching)</option>
+                    <option value="review">📊 Only in Review</option>
                 </select>
             </div>
             <div class="setting-group"><label>Time Control:</label>
@@ -1198,11 +1321,11 @@
         </div>
     </div>
 
-    <!-- Match Log Modal -->
+    <!-- Saved States & Match Log Modal -->
     <div id="history-modal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="margin-top:0; border-bottom: 1px solid var(--border-subtle); padding-bottom:10px;">Saved Matches</h3>
-            <div id="history-list" style="max-height: 50vh; overflow-y: auto;"></div>
+            <h3 style="margin-top:0; border-bottom: 1px solid var(--border-subtle); padding-bottom:10px;">Saved States & Matches</h3>
+            <div id="history-list" style="max-height: 55vh; overflow-y: auto;"></div>
             <button class="action-btn" style="width:100%; margin-top:12px; padding:10px;" onclick="closeHistory()">Close</button>
         </div>
     </div>
@@ -1271,6 +1394,83 @@
         "e4 e5 Nf3 Nf6": "Petrov's Defense", "e4 e5 Nf3 d6": "Philidor Defense", "d4 Nf6 c4 e6 Nc3 Bb4": "Nimzo-Indian Defense"
     };
 
+    const BOT_PROFILES = {
+        '250':  { name: 'Martin (250)', avatar: '👶', depth: 1, blunderRate: 0.60, style: 'random' },
+        '450':  { name: 'Elani (450)', avatar: '🌱', depth: 1, blunderRate: 0.42, style: 'casual' },
+        '700':  { name: 'Aron (700)', avatar: '🛡️', depth: 2, blunderRate: 0.28, style: 'casual' },
+        '1000': { name: 'Emir (1000)', avatar: '⚔️', depth: 2, blunderRate: 0.16, style: 'balanced' },
+        '1200': { name: 'Sven (1200)', avatar: '🏛️', depth: 3, blunderRate: 0.10, style: 'solid' },
+        '1350': { name: 'Nelson (1350)', avatar: '👑', depth: 3, blunderRate: 0.08, style: 'queen_agro' },
+        '1500': { name: 'Coach Dan (1500)', avatar: '🎓', depth: 4, blunderRate: 0.05, style: 'teacher' },
+        '1700': { name: 'Isabel (1700)', avatar: '🎯', depth: 5, blunderRate: 0.02, style: 'tactical' },
+        '1950': { name: 'Wally (1950)', avatar: '🧠', depth: 6, blunderRate: 0.0, style: 'positional' },
+        '2200': { name: 'Master Li (2200)', avatar: '⚡', depth: 8, blunderRate: 0.0, style: 'master' },
+        '2500': { name: 'GM Nova (2500)', avatar: '🔥', depth: 10, blunderRate: 0.0, style: 'gm' },
+        '2800': { name: 'Stockfish (2800)', avatar: '🤖', depth: 12, blunderRate: 0.0, style: 'max' }
+    };
+
+    const ENDGAME_DRILLS = {
+        kqk:      { fen: "8/8/8/4k3/8/8/8/3QK3 w - - 0 1", title: "King + Queen vs. King: Drive the enemy King to the edge and deliver mate." },
+        krk:      { fen: "8/8/8/4k3/8/8/8/3RK3 w - - 0 1", title: "King + Rook vs. King: Use the Rook to shrink the box and use King opposition." },
+        kbbk:     { fen: "8/8/8/4k3/8/8/8/2B1KB2 w - - 0 1", title: "Two Bishops Mate: Centralize your King and sweep the diagonals." },
+        kpk:      { fen: "8/8/4k3/8/4P3/4K3/8/8 w - - 0 1", title: "King + Pawn vs. King: Seize the opposition in front of your pawn to promote!" },
+        lucena:   { fen: "1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1", title: "Lucena Position: Build a bridge with your Rook on the 4th rank (Rc4!)." },
+        philidor: { fen: "4k3/8/8/4PK2/8/8/8/3r1R2 b - - 0 1", title: "Philidor Defense: Keep your Rook on the 6th rank (Rd6!) to hold the draw." },
+        qvsp:     { fen: "8/8/8/8/8/1Q6/3kp3/5K2 w - - 0 1", title: "Queen vs. 7th-Rank Pawn: Use checks to force the enemy King in front of its pawn." },
+        ocb:      { fen: "8/8/4k3/3p4/3B2b1/2P1K3/8/8 w - - 0 1", title: "Opposite-Colored Bishops: Advance using color complexes the defender cannot blockade." }
+    };
+
+    const OPENING_BOOK_TREE = {
+        "": [
+            { san: "e4", w: 54, d: 22, b: 24, name: "King's Pawn" },
+            { san: "d4", w: 55, d: 24, b: 21, name: "Queen's Pawn" },
+            { san: "Nf3", w: 53, d: 26, b: 21, name: "Zukertort" },
+            { san: "c4", w: 54, d: 25, b: 21, name: "English" }
+        ],
+        "e4": [
+            { san: "c5", w: 52, d: 21, b: 27, name: "Sicilian Defense" },
+            { san: "e5", w: 54, d: 23, b: 23, name: "Open Game" },
+            { san: "e6", w: 54, d: 24, b: 22, name: "French Defense" },
+            { san: "c6", w: 53, d: 25, b: 22, name: "Caro-Kann" }
+        ],
+        "e4 e5": [
+            { san: "Nf3", w: 55, d: 23, b: 22, name: "King's Knight" },
+            { san: "Bc4", w: 52, d: 21, b: 27, name: "Bishop's Opening" },
+            { san: "Nc3", w: 51, d: 24, b: 25, name: "Vienna Game" }
+        ],
+        "e4 e5 Nf3": [
+            { san: "Nc6", w: 54, d: 24, b: 22, name: "Main Line" },
+            { san: "Nf6", w: 53, d: 27, b: 20, name: "Petrov's Defense" }
+        ],
+        "e4 e5 Nf3 Nc6": [
+            { san: "Bb5", w: 56, d: 24, b: 20, name: "Ruy Lopez" },
+            { san: "Bc4", w: 54, d: 23, b: 23, name: "Italian Game" },
+            { san: "d4", w: 53, d: 24, b: 23, name: "Scotch Game" }
+        ],
+        "e4 c5": [
+            { san: "Nf3", w: 54, d: 22, b: 24, name: "Open Sicilian" },
+            { san: "Nc3", w: 51, d: 24, b: 25, name: "Closed Sicilian" },
+            { san: "c3", w: 52, d: 24, b: 24, name: "Alapin Sicilian" }
+        ],
+        "d4": [
+            { san: "Nf6", w: 53, d: 25, b: 22, name: "Indian Defenses" },
+            { san: "d5", w: 55, d: 25, b: 20, name: "Closed Game" }
+        ],
+        "d4 d5": [
+            { san: "c4", w: 56, d: 25, b: 19, name: "Queen's Gambit" },
+            { san: "Bf4", w: 54, d: 24, b: 22, name: "London System" }
+        ],
+        "d4 d5 c4": [
+            { san: "e6", w: 55, d: 26, b: 19, name: "QGD" },
+            { san: "c6", w: 54, d: 26, b: 20, name: "Slav Defense" },
+            { san: "dxc4", w: 56, d: 23, b: 21, name: "QGA" }
+        ],
+        "d4 Nf6": [
+            { san: "c4", w: 55, d: 24, b: 21, name: "Indian Main Line" },
+            { san: "Bf4", w: 53, d: 25, b: 22, name: "London System" }
+        ]
+    };
+
     var INITIAL_BOARD = [
         'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r', 'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
         '',  '',  '',  '',  '',  '',  '',  '',  '',  '',  '',  '',  '',  '',  '',  '',
@@ -1286,7 +1486,9 @@
     var soundEnabled = true;
     var premoveSetting = 'single';
     var confirmMoveSetting = 'off';
-    var currentDifficulty = '1600';
+    var currentDifficulty = '1500';
+    var liveCoachEnabled = true;
+    var voiceCoachTTSEnabled = false;
     var playerColorSetting = 'white';
     var playerColor = 'white';
     var openingExplorerSetting = '';
@@ -1301,12 +1503,13 @@
             var s = JSON.parse(raw);
             if (s.playerColorSetting) playerColorSetting = s.playerColorSetting;
             if (s.currentMode) currentMode = s.currentMode;
-            if (s.currentDifficulty) currentDifficulty = s.currentDifficulty;
+            if (s.currentDifficulty && BOT_PROFILES[s.currentDifficulty]) currentDifficulty = s.currentDifficulty;
             if (s.timeControlSetting) timeControlSetting = s.timeControlSetting;
             if (s.confirmMoveSetting) confirmMoveSetting = s.confirmMoveSetting;
             if (s.premoveSetting) premoveSetting = s.premoveSetting;
             if (s.currentTheme && THEMES[s.currentTheme]) currentTheme = s.currentTheme;
             if (typeof s.soundEnabled === 'boolean') soundEnabled = s.soundEnabled;
+            if (typeof s.liveCoachEnabled === 'boolean') liveCoachEnabled = s.liveCoachEnabled;
             if (typeof s.openingExplorerSetting === 'string') openingExplorerSetting = s.openingExplorerSetting;
         } catch (e) {}
     }
@@ -1322,13 +1525,13 @@
                 premoveSetting: premoveSetting,
                 currentTheme: currentTheme,
                 soundEnabled: soundEnabled,
+                liveCoachEnabled: liveCoachEnabled,
                 openingExplorerSetting: openingExplorerSetting
             };
             localStorage.setItem('chessMasterSettings', JSON.stringify(payload));
         } catch (e) {}
     }
 
-    // Load user settings immediately on script boot
     loadSavedSettings();
 
     var playerElo = parseInt(localStorage.getItem('chessPlayerElo'), 10) || 1200;
@@ -1372,6 +1575,7 @@
     var threatFrom = null;
     var threatTo = null;
     var showThreatEnabled = false;
+    var retryPuzzleState = null;
 
     var premoves = [];
     var stagedMove = null;
@@ -1392,11 +1596,9 @@
     var reviewIndex = 0;
     var reviewGameData = [];
 
-    /* Custom Board Setter & OCR Scanner State */
     var isEditorMode = false;
-    var editorSelectedTool = 'P'; // 'K','Q','R','B','N','P','k','q','r','b','n','p','erase','move'
+    var editorSelectedTool = 'P';
     var ocrSourceImage = null;
-
     /* =========================================================================
        TOAST NOTIFICATIONS, TABS & HELPERS
        ========================================================================= */
@@ -1425,7 +1627,7 @@
             selectedIdx = null;
             validMoves = [];
             document.getElementById('editor-turn-select').value = currentPlayer;
-            setCoachBanner(null, 'editor', 'Board Editor Active: Tap squares to place or erase pieces.');
+            setCoachBanner(null, 'editor', 'Board Editor Active: Tap squares to place or erase pieces, or pick an Endgame Drill.');
         }
         if (tabName === 'analysis') drawEvaluationGraph();
         updateUI();
@@ -1440,6 +1642,7 @@
             coachBadgePill.style.display = 'none';
         }
         coachTextEl.textContent = text || '';
+        speakCoachMessage(text);
     }
 
     function isBoardInverted() {
@@ -1498,7 +1701,7 @@
     }
 
     /* =========================================================================
-       CUSTOM BOARD SETTER & CAMERA / GALLERY OCR SCANNER (LIKE CHESS.COM)
+       CUSTOM BOARD SETTER & CAMERA / GALLERY OCR SCANNER
        ========================================================================= */
     function initEditorPalette() {
         var tools = [
@@ -1518,6 +1721,7 @@
             { id: 'erase', label: '🗑️', title: 'Erase Square' }
         ];
         var container = document.getElementById('editor-palette');
+        if (!container) return;
         container.innerHTML = '';
         tools.forEach(function(t) {
             var btn = document.createElement('button');
@@ -1549,13 +1753,11 @@
                 selectedIdx = null;
             }
         } else {
-            // Prevent placing pawns on 1st or 8th rank
             var row = Math.floor(lIdx / 8);
             if ((editorSelectedTool === 'P' || editorSelectedTool === 'p') && (row === 0 || row === 7)) {
                 showToast("Pawns cannot be placed on the 1st or 8th rank");
                 return;
             }
-            // Ensure only 1 King per color
             if (editorSelectedTool === 'K' || editorSelectedTool === 'k') {
                 var existingKing = board.indexOf(editorSelectedTool);
                 if (existingKing !== -1 && existingKing !== lIdx) {
@@ -1620,6 +1822,7 @@
         lastMoveTo = null;
         reviewBestFrom = null;
         reviewBestTo = null;
+        retryPuzzleState = null;
         isGameOver = false;
         isReviewMode = false;
         gameHistoryLog = [];
@@ -1641,7 +1844,6 @@
         }
     }
 
-    /* Camera / Gallery OCR Scanner Functions */
     function triggerOcrUpload() {
         var savedKey = localStorage.getItem('chessGeminiApiKey') || '';
         document.getElementById('ocr-gemini-key').value = savedKey;
@@ -1672,7 +1874,7 @@
         ocrModal.style.display = 'none';
     }
 
-        function drawOcrPreview(hideGridOverlay) {
+    function drawOcrPreview(hideGridOverlay) {
         if (!ocrSourceImage) return;
         var canvas = document.getElementById('ocr-canvas');
         var ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -1709,7 +1911,6 @@
         }
     }
 
-    // 100% Offline Edge-Gradient & Arrow-Resistant 2D Board Classifier
     function runOfflineCanvasOcr() {
         if (!ocrSourceImage) return;
         drawOcrPreview(true);
@@ -1726,7 +1927,6 @@
                 var sw = Math.floor(sqSize);
                 var imgData = ctx.getImageData(sx, sy, sw, sw).data;
 
-                // 1. Sample outer ring (excluding 3px border & excluding saturated red/green arrows) for clean background luminance
                 var ringLumSum = 0, ringCount = 0;
                 for (var y = 3; y < sw - 3; y++) {
                     for (var x = 3; x < sw - 3; x++) {
@@ -1734,7 +1934,7 @@
                         if (!inCore) {
                             var pIdx = (y * sw + x) * 4;
                             var pr = imgData[pIdx], pg = imgData[pIdx + 1], pb = imgData[pIdx + 2];
-                            if (Math.max(pr, pg, pb) - Math.min(pr, pg, pb) > 65) continue; // Ignore colored arrows
+                            if (Math.max(pr, pg, pb) - Math.min(pr, pg, pb) > 65) continue;
                             ringLumSum += (0.299 * pr + 0.587 * pg + 0.114 * pb);
                             ringCount++;
                         }
@@ -1742,7 +1942,6 @@
                 }
                 var bgLum = ringCount > 0 ? (ringLumSum / ringCount) : 128;
 
-                // 2. Scan inner core for high-contrast piece silhouette & horizontal width profile
                 var fgCount = 0, edgeEnergy = 0, veryDark = 0, veryLight = 0;
                 var minY = sw, maxY = 0;
                 var topW = 0, midW = 0, botW = 0;
@@ -1754,7 +1953,6 @@
                     for (var ix = padX; ix < sw - padX; ix++) {
                         var idx = (iy * sw + ix) * 4;
                         var cr = imgData[idx], cg = imgData[idx + 1], cb = imgData[idx + 2];
-                        // Skip saturated tactical arrow pixels (e.g. red arrows)
                         if (cr - cg > 55 && cr - cb > 55) continue;
 
                         var lum = 0.299 * cr + 0.587 * cg + 0.114 * cb;
@@ -1782,8 +1980,6 @@
 
                 var fillRatio = fgCount / Math.max(1, innerArea);
                 var edgeRatio = edgeEnergy / Math.max(1, innerArea);
-
-                // Empty squares have low edge energy or low foreground fill
                 if (edgeRatio < 0.11 || fillRatio < 0.16) continue;
 
                 var isWhitePiece = (veryLight > veryDark * 0.55);
@@ -1816,10 +2012,9 @@
         closeOcrModal();
         switchTab('setup');
         updateUI();
-        showToast("Board scanned! Fine-tune any square with the palette, then click ▶️ Play Here.");
+        showToast("Board scanned! Fine-tune any square with the palette, then click ▶️ Play.");
     }
 
-    // Optional High-Precision Gemini Vision AI Board Scanner
     async function runGeminiVisionOcr() {
         var apiKey = document.getElementById('ocr-gemini-key').value.trim();
         if (!apiKey) {
@@ -1911,19 +2106,16 @@
         var lIdx = getLogicalIdxFromPoint(e.clientX, e.clientY);
         if (lIdx === null) return;
 
-        // Right-click (button === 2): start tactical arrow or square highlight
         if (e.button === 2) {
             rClickStartIdx = lIdx;
             return;
         }
 
-        // Custom Board Setter Mode
         if (isEditorMode) {
             handleEditorSquareAction(lIdx);
             return;
         }
 
-        // Clear any tactical arrows on left-click
         if (userArrows.length > 0 || Object.keys(rClickSquares).length > 0) {
             userArrows = [];
             rClickSquares = {};
@@ -1936,7 +2128,6 @@
         var isOpponentTurn = (isMultiplayerActive && currentPlayer !== multiplayerRole) ||
                              (currentMode === 'cpu' && currentPlayer !== playerColor && !isMultiplayerActive);
 
-        // Start Dragging if clicking own piece on our turn
         if (!isOpponentTurn && getColor(board[lIdx]) === currentPlayer) {
             selectedIdx = lIdx;
             validMoves = getLegalMoves(lIdx);
@@ -2146,6 +2337,7 @@
             validMoves = [];
             lastMoveFrom = null;
             lastMoveTo = null;
+            retryPuzzleState = null;
             gameHistoryLog = [];
             algebraicMoves = [];
             moveClassifications = [];
@@ -2261,7 +2453,9 @@
         return (kIdx !== -1 && isSquareAttacked(kIdx, col === 'white' ? 'black' : 'white', b)) ? kIdx : -1;
     }
 
-    function getAlgebraic(f, t, p, isCap, promoPiece) {
+        function getAlgebraic(f, t, p, isCap, promoPiece, customBoard) {
+        if (!p) return "";
+        var bRef = customBoard || board;
         if (p.toUpperCase() === 'K' && Math.abs(f - t) === 2) return t > f ? "O-O" : "O-O-O";
         var pUpper = p.toUpperCase();
         var fFile = String.fromCharCode(97 + (f % 8));
@@ -2271,8 +2465,8 @@
         if (pUpper !== 'P' && pUpper !== 'K') {
             var sameFile = false, sameRank = false, ambigCount = 0;
             for (var i = 0; i < 64; i++) {
-                if (i !== f && board[i] === p) {
-                    var oMoves = getLegalMoves(i);
+                if (i !== f && bRef[i] === p) {
+                    var oMoves = getLegalMoves(i, bRef);
                     if (oMoves.indexOf(t) !== -1) {
                         ambigCount++;
                         if ((i % 8) === (f % 8)) sameFile = true;
@@ -2508,8 +2702,9 @@
         }
         promoModal.style.display = 'flex';
     }
+
     /* =========================================================================
-       PART 4: STATIC EVALUATOR, WATCHDOG STOCKFISH + LOCAL ENGINE & CLASSIFIER
+       STATIC EVALUATOR, WATCHDOG STOCKFISH + LOCAL ENGINE & CLASSIFIER
        ========================================================================= */
     const PST_PAWN = [
          0,  0,  0,  0,  0,  0,  0,  0,
@@ -2574,7 +2769,6 @@
 
     const BASE_CP = { 'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000 };
 
-    // Returns evaluation in pawns from White's perspective (+1.50 = White ahead by 1.5 pawns)
     function staticEvaluateBoard(bState) {
         var scoreCp = 0;
         var wBishops = 0, bBishops = 0;
@@ -2648,7 +2842,6 @@
         return nextB;
     }
 
-    // Fast Alpha-Beta Minimax Search with Move Ordering (Always-Available Local Engine)
     function computeLocalBestMove(bState, turnColor, depth) {
         var moves = getAllLegalMoveObjects(turnColor, bState);
         if (moves.length === 0) return null;
@@ -2711,7 +2904,6 @@
             }
         }
 
-        // Compute principal continuation reply for PV line display
         var afterBest = simulateMoveOnClone(bState, bestMove.from, bestMove.to);
         var oppColor = (turnColor === 'white') ? 'black' : 'white';
         var oppReplies = getAllLegalMoveObjects(oppColor, afterBest);
@@ -2727,14 +2919,14 @@
         };
     }
 
-    /* Watchdog-Protected Stockfish Web Worker */
     var sfWorker = null;
     var sfReady = false;
     var sfCurrentCallback = null;
     var sfWatchdogTimer = null;
     var sfLastScoreWhitePov = 0;
     var sfLastMate = null;
-    var sfLastPv = '';
+        var sfLastPv = '';
+    var sfSearchSide = 'white';
 
     function initStockfishWorker() {
         if (sfWorker) return;
@@ -2747,7 +2939,7 @@
                 if (line === 'uciok' || line === 'readyok') {
                     sfReady = true;
                 } else if (line.indexOf('info ') === 0 && line.indexOf(' score ') !== -1) {
-                    var turnMult = (currentPlayer === 'white') ? 1 : -1;
+                    var turnMult = (sfSearchSide === 'white') ? 1 : -1;
                     var cpMatch = line.match(/score cp (-?\d+)/);
                     var mateMatch = line.match(/score mate (-?\d+)/);
                     var pvMatch = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?.*)/);
@@ -2793,9 +2985,9 @@
 
     initStockfishWorker();
 
-    // Unified Engine Query with Automatic Local Engine Fallback (Never Hangs!)
     function queryEngineBestMove(fenStr, bState, sideToMove, depth, callback) {
         var resolved = false;
+        sfSearchSide = sideToMove;
         function finishWithFallback() {
             if (resolved) return;
             resolved = true;
@@ -2823,7 +3015,6 @@
         if (sfWorker && sfReady) {
             sfCurrentCallback = function(sfRes) {
                 if (resolved) return;
-                // Verify move legality on current board state
                 if (sfRes && sfRes.from !== null && sfRes.to !== null && getLegalMoves(sfRes.from, bState).indexOf(sfRes.to) !== -1) {
                     resolved = true;
                     callback(sfRes);
@@ -2845,9 +3036,9 @@
     }
 
     /* =========================================================================
-       💡 WORKING BEST MOVE / HINT BUTTON & THREAT ANALYSIS
+       💡 BEST MOVE / HINT BUTTON (DISABLED IN P2P) & THREAT ANALYSIS
        ========================================================================= */
-        function triggerBestMoveAnalysis() {
+    function triggerBestMoveAnalysis() {
         if (!isReviewMode && (isMultiplayerActive || currentMode === 'pvp')) {
             showToast("Best Move hints are disabled in P2P mode.");
             return;
@@ -2880,7 +3071,7 @@
             var pvEl = document.getElementById('engine-line-text');
             if (pvEl) pvEl.textContent = pvText;
 
-            setCoachBanner('★ BEST', 'badge-best', 'Recommended move for ' + (activeSide === 'white' ? 'White' : 'Black') + ': ' + san + ' (' + evalStr + ')');
+            setCoachBanner('★ BEST', 'badge-best', 'Coach recommends for ' + (activeSide === 'white' ? 'White' : 'Black') + ': ' + san + ' (' + evalStr + ')');
             renderArrows();
             updateUI();
         });
@@ -2908,38 +3099,92 @@
     }
 
     /* =========================================================================
-       CHESS.COM MOVE CLASSIFIER (!! BRILLIANT TO ?? BLUNDER) & ACCURACY %
+       ACCURATE MOVE CLASSIFIER (NO FALSE BRILLIANTS) & TEACHER BOT ENGINE
        ========================================================================= */
     function scoreToWinProb(scorePawns) {
         var cp = Math.max(-1500, Math.min(1500, scorePawns * 100));
         return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
     }
 
+    function getLowestAttackerValue(sqIdx, attackerColor, bState) {
+        var minVal = 999;
+        for (var i = 0; i < 64; i++) {
+            if (bState[i] && getColor(bState[i]) === attackerColor) {
+                if (getMoves(i, bState, true).indexOf(sqIdx) !== -1) {
+                    var v = PIECE_VALUES[bState[i].toLowerCase()] || 1;
+                    if (v < minVal) minVal = v;
+                }
+            }
+        }
+        return minVal === 999 ? 0 : minVal;
+    }
+
+    function buildTeacherExplanation(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, badgeType, bestSan) {
+        var p = (prevBoard[fromIdx] || 'P').toLowerCase();
+        var cap = prevBoard[toIdx];
+        var oppCol = movedColor === 'white' ? 'black' : 'white';
+        var isCenterSq = [27, 28, 35, 36].indexOf(toIdx) !== -1;
+        var isCastle = (algMove === 'O-O' || algMove === 'O-O-O');
+        var gaveCheck = algMove.indexOf('+') !== -1;
+        var ply = algebraicMoves.length;
+
+        if (badgeType === 'brilliant') {
+            return algMove + '!! Brilliant sacrifice — you offered material to rip open lines and seize a decisive tactical attack!';
+        }
+        if (badgeType === 'great') {
+            if (gaveCheck) return algMove + '! Great forcing check that seizes the initiative.';
+            if (cap) return algMove + '! Great tactical capture — wins key material or breaks the defense.';
+            return algMove + '! Critical find to maintain your advantage in a sharp position.';
+        }
+        if (badgeType === 'best' || badgeType === 'good') {
+            if (isCastle) return algMove + ' — Castles the King to safety and activates your Rook toward the center.';
+            if (ply <= 12 && (p === 'n' || p === 'b')) return algMove + ' — Good opening development, bringing a minor piece into active play.';
+            if (isCenterSq && p === 'p') return algMove + ' — Stakes a strong claim in the center of the board.';
+            if (cap) return algMove + ' — Clean trade that keeps your position solid.';
+            if (gaveCheck) return algMove + ' — Active check that forces the enemy King to respond.';
+            return algMove + ' — Solid positional move improving piece coordination.';
+        }
+
+        var movedVal = PIECE_VALUES[p] || 1;
+        var enemyLowestAttacker = getLowestAttackerValue(toIdx, oppCol, newBoard);
+        var isDefended = getLowestAttackerValue(toIdx, movedColor, newBoard) > 0;
+
+        if (enemyLowestAttacker > 0 && (!isDefended || enemyLowestAttacker < movedVal)) {
+            return algMove + ' leaves your ' + p.toUpperCase() + ' vulnerable on ' + idxToSquareName(toIdx) + '! ' + (bestSan ? ('Coach recommends ' + bestSan + ' instead.') : '');
+        }
+        if (ply <= 8 && p === 'q') {
+            return algMove + ' brings the Queen out too early, allowing the opponent to gain tempo attacking it. ' + (bestSan ? ('Develop with ' + bestSan + ' first.') : '');
+        }
+        if (badgeType === 'blunder') {
+            return algMove + '?? Blunder — drops critical material or overlooks an immediate tactical threat! ' + (bestSan ? (bestSan + ' was required to stay safe.') : '');
+        }
+        if (badgeType === 'mistake') {
+            return algMove + '? Mistake — surrenders positional control. ' + (bestSan ? ('Coach suggests ' + bestSan + ' to keep pressure.') : '');
+        }
+        return algMove + '?! Slight inaccuracy — ' + (bestSan ? (bestSan + ' was a more active continuation.') : 'allows the opponent easier play.');
+    }
+
     function classifyMoveQuality(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, prevEvalWhite, newEvalWhite, plyCount) {
-        // Check Opening Book match for early plies
         var moveSeq = algebraicMoves.join(' ');
-        if (plyCount <= 8 && OPENINGS[moveSeq]) {
+        if (plyCount <= 10 && OPENINGS[moveSeq]) {
             return {
-                type: 'good',
-                glyph: '📖',
-                label: 'Book',
-                cls: 'badge-book',
-                hex: '#a88865',
-                winLoss: 0,
-                coach: 'Book move: ' + OPENINGS[moveSeq] + '.',
-                bestFrom: fromIdx,
-                bestTo: toIdx
+                type: 'good', glyph: '📖', label: 'Book', cls: 'badge-book', hex: '#a88865', winLoss: 0,
+                coach: 'Book Theory (' + OPENINGS[moveSeq] + '): Standard master opening move.',
+                bestFrom: fromIdx, bestTo: toIdx
             };
         }
 
-        // Compare against local engine best move from previous position
-        var bestBefore = computeLocalBestMove(prevBoard, movedColor, 2);
+        var bestBefore = computeLocalBestMove(prevBoard, movedColor, 3);
         var bestFrom = bestBefore ? bestBefore.from : fromIdx;
         var bestTo = bestBefore ? bestBefore.to : toIdx;
         var bestScoreWhite = bestBefore ? bestBefore.scoreWhitePov : prevEvalWhite;
 
+        var oppCol = movedColor === 'white' ? 'black' : 'white';
+        var afterReply = computeLocalBestMove(newBoard, oppCol, 2);
+        var verifiedNewEvalWhite = afterReply ? afterReply.scoreWhitePov : newEvalWhite;
+
         var wpBefore = scoreToWinProb(movedColor === 'white' ? bestScoreWhite : -bestScoreWhite);
-        var wpAfter  = scoreToWinProb(movedColor === 'white' ? newEvalWhite : -newEvalWhite);
+        var wpAfter  = scoreToWinProb(movedColor === 'white' ? verifiedNewEvalWhite : -verifiedNewEvalWhite);
         var winProbLoss = Math.max(0, wpBefore - wpAfter);
 
         var playedIsEngineBest = (fromIdx === bestFrom && toIdx === bestTo);
@@ -2947,109 +3192,67 @@
         var movedVal = PIECE_VALUES[movedPiece.toLowerCase()] || 1;
         var capturedPiece = prevBoard[toIdx] || '';
         var capVal = capturedPiece ? (PIECE_VALUES[capturedPiece.toLowerCase()] || 0) : 0;
-        var oppCol = movedColor === 'white' ? 'black' : 'white';
+                var bestSan = prevBoard[bestFrom] ? getAlgebraic(bestFrom, bestTo, prevBoard[bestFrom], !!prevBoard[bestTo], null, prevBoard) : '';
 
-        // Detect Brilliant (!!) - Tactical sacrifice or leaving a higher-value piece en prise while keeping/gaining winning advantage
-        var destAttacked = isSquareAttacked(toIdx, oppCol, newBoard);
-        var isSacrifice = (movedVal >= 3 && destAttacked && capVal < movedVal);
-        if (isSacrifice && winProbLoss <= 3.5 && wpAfter >= 52) {
+        // Strict Brilliant (!!) verification: must be a genuine material sacrifice into an attacker
+        var lowestEnemyAttacker = getLowestAttackerValue(toIdx, oppCol, newBoard);
+        var hasFriendlyDefender = getLowestAttackerValue(toIdx, movedColor, newBoard) > 0;
+        var isTrueSacrifice = (movedVal >= 3) && (capVal + 2 <= movedVal) && (lowestEnemyAttacker > 0) &&
+                              (!hasFriendlyDefender || lowestEnemyAttacker < movedVal);
+
+        if (isTrueSacrifice && winProbLoss <= 2.0 && wpAfter >= 55 && wpBefore < 88) {
             return {
-                type: 'brilliant',
-                glyph: '!!',
-                label: 'Brilliant',
-                cls: 'badge-brilliant',
-                hex: '#1baca6',
-                winLoss: winProbLoss,
-                coach: algMove + '!! Brilliant tactical sacrifice!',
-                bestFrom: bestFrom,
-                bestTo: bestTo
+                type: 'brilliant', glyph: '!!', label: 'Brilliant', cls: 'badge-brilliant', hex: '#1baca6', winLoss: winProbLoss,
+                coach: buildTeacherExplanation(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, 'brilliant', bestSan),
+                bestFrom: bestFrom, bestTo: bestTo
             };
         }
 
-        // Detect Great (!) - Finding the critical move that swings or preserves the game
         var prevMoverWp = scoreToWinProb(movedColor === 'white' ? prevEvalWhite : -prevEvalWhite);
-        if (playedIsEngineBest && (wpAfter - prevMoverWp >= 12 || (algMove.indexOf('#') !== -1))) {
+        if (playedIsEngineBest && ((wpAfter - prevMoverWp >= 14 && wpBefore < 85) || algMove.indexOf('#') !== -1)) {
             return {
-                type: 'great',
-                glyph: '!',
-                label: 'Great',
-                cls: 'badge-great',
-                hex: '#5c8bb0',
-                winLoss: 0,
-                coach: algMove + '! Great find — seizes the initiative.',
-                bestFrom: bestFrom,
-                bestTo: bestTo
+                type: 'great', glyph: '!', label: 'Great', cls: 'badge-great', hex: '#5c8bb0', winLoss: 0,
+                coach: buildTeacherExplanation(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, 'great', bestSan),
+                bestFrom: bestFrom, bestTo: bestTo
             };
         }
 
-        if (playedIsEngineBest || winProbLoss <= 2.2) {
+        if (playedIsEngineBest || winProbLoss <= 2.5) {
             return {
-                type: 'best',
-                glyph: '★',
-                label: 'Best',
-                cls: 'badge-best',
-                hex: '#96bc4b',
-                winLoss: winProbLoss,
-                coach: algMove + ' is the best move in this position.',
-                bestFrom: bestFrom,
-                bestTo: bestTo
+                type: 'best', glyph: '★', label: 'Best', cls: 'badge-best', hex: '#81b64c', winLoss: winProbLoss,
+                coach: buildTeacherExplanation(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, 'best', bestSan),
+                bestFrom: bestFrom, bestTo: bestTo
             };
         }
 
-        if (winProbLoss <= 6.5) {
+        if (winProbLoss <= 7.0) {
             return {
-                type: 'good',
-                glyph: '✓',
-                label: 'Good',
-                cls: 'badge-good',
-                hex: '#96af8b',
-                winLoss: winProbLoss,
-                coach: algMove + ' is a solid developing move.',
-                bestFrom: bestFrom,
-                bestTo: bestTo
+                type: 'good', glyph: '✓', label: 'Good', cls: 'badge-good', hex: '#95b776', winLoss: winProbLoss,
+                coach: buildTeacherExplanation(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, 'good', bestSan),
+                bestFrom: bestFrom, bestTo: bestTo
             };
         }
 
-        var bestSan = prevBoard[bestFrom] ? getAlgebraic(bestFrom, bestTo, prevBoard[bestFrom], !!prevBoard[bestTo], null) : '';
-
-        if (winProbLoss <= 13.0) {
+        if (winProbLoss <= 14.0) {
             return {
-                type: 'inaccuracy',
-                glyph: '?!',
-                label: 'Inaccuracy',
-                cls: 'badge-inaccuracy',
-                hex: '#f7c631',
-                winLoss: winProbLoss,
-                coach: algMove + ' is an inaccuracy. ' + (bestSan ? (bestSan + ' was stronger.') : ''),
-                bestFrom: bestFrom,
-                bestTo: bestTo
+                type: 'inaccuracy', glyph: '?!', label: 'Inaccuracy', cls: 'badge-inaccuracy', hex: '#f0c15c', winLoss: winProbLoss,
+                coach: buildTeacherExplanation(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, 'inaccuracy', bestSan),
+                bestFrom: bestFrom, bestTo: bestTo
             };
         }
 
-        if (winProbLoss <= 24.0) {
+        if (winProbLoss <= 25.0) {
             return {
-                type: 'mistake',
-                glyph: '?',
-                label: 'Mistake',
-                cls: 'badge-mistake',
-                hex: '#e6912c',
-                winLoss: winProbLoss,
-                coach: algMove + ' is a mistake. ' + (bestSan ? ('Better was ' + bestSan + '.') : ''),
-                bestFrom: bestFrom,
-                bestTo: bestTo
+                type: 'mistake', glyph: '?', label: 'Mistake', cls: 'badge-mistake', hex: '#e6912c', winLoss: winProbLoss,
+                coach: buildTeacherExplanation(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, 'mistake', bestSan),
+                bestFrom: bestFrom, bestTo: bestTo
             };
         }
 
         return {
-            type: 'blunder',
-            glyph: '??',
-            label: 'Blunder',
-            cls: 'badge-blunder',
-            hex: '#ca3431',
-            winLoss: winProbLoss,
-            coach: algMove + '?? Blunder! ' + (bestSan ? (bestSan + ' was required.') : ''),
-            bestFrom: bestFrom,
-            bestTo: bestTo
+            type: 'blunder', glyph: '??', label: 'Blunder', cls: 'badge-blunder', hex: '#ca3431', winLoss: winProbLoss,
+            coach: buildTeacherExplanation(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, 'blunder', bestSan),
+            bestFrom: bestFrom, bestTo: bestTo
         };
     }
 
@@ -3099,9 +3302,8 @@
         setTxt('rb-w-blunder', counts.white.blunder);
         setTxt('rb-b-blunder', counts.black.blunder);
     }
-
     /* =========================================================================
-       TURN COMPLETION, HISTORY FRAMES, AI DISPATCH & GAME OVER
+       TURN COMPLETION, HISTORY FRAMES, BOT PERSONALITIES & GAME OVER
        ========================================================================= */
     function recordHistoryFrame(algMove, evalScoreWhite, classificationObj) {
         gameHistoryLog.push({
@@ -3123,7 +3325,10 @@
     }
 
     function finishTurn(algMove, movedCol, fromIdx, toIdx) {
-        // Add time increment to the player who just moved
+        var wasRetry = (retryPuzzleState && retryPuzzleState.active);
+        var retryGoal = retryPuzzleState;
+        if (wasRetry) retryPuzzleState = null;
+
         if (timeControlSetting !== 'unlimited' && timeIncrement > 0) {
             if (movedCol === 'white' && timerWhite !== null) timerWhite += timeIncrement;
             if (movedCol === 'black' && timerBlack !== null) timerBlack += timeIncrement;
@@ -3143,8 +3348,7 @@
 
         algebraicMoves.push(algMove);
 
-        // Classify Move & Update Evaluation
-        var prevFrame = gameHistoryLog.length > 0 ? gameHistoryLog[gameHistoryLog.length - 1] : null;
+                var prevFrame = gameHistoryLog.length > 0 ? gameHistoryLog[gameHistoryLog.length - 1] : null;
         var prevBoard = prevFrame ? prevFrame.board : INITIAL_BOARD;
         var prevEval = prevFrame ? prevFrame.evalScore : 0;
         var newEval = staticEvaluateBoard(board);
@@ -3152,23 +3356,45 @@
             newEval = (movedCol === 'white') ? 99 : -99;
         }
 
+        // Temporarily restore previous castling & en-passant state so the reviewer evaluates prevBoard accurately
+        var savedCastle = Object.assign({}, castlingRights);
+        var savedEp = epSquare;
+        if (prevFrame) {
+            castlingRights = Object.assign({}, prevFrame.castlingRights);
+            epSquare = prevFrame.epSquare;
+        }
         var classification = classifyMoveQuality(
             prevBoard, board, movedCol, fromIdx, toIdx, algMove, prevEval, newEval, algebraicMoves.length
         );
+        castlingRights = savedCastle;
+        epSquare = savedEp;
         moveClassifications.push(classification);
 
-                recordHistoryFrame(algMove, newEval, classification);
+        recordHistoryFrame(algMove, newEval, classification);
         updateEvalBar(newEval, null);
+        autoSaveLiveState();
 
-        // During a running game, only show clean turn/opening status (no move badges until Review/Analysis)
-        var moveSeqStr = algebraicMoves.join(' ');
-        var liveOpening = '';
-        for (var oKey in OPENINGS) {
-            if (moveSeqStr.indexOf(oKey) === 0) liveOpening = OPENINGS[oKey];
+        var avatarEl = document.getElementById('coach-avatar');
+        var botProf = BOT_PROFILES[currentDifficulty] || BOT_PROFILES['1500'];
+        if (avatarEl) avatarEl.textContent = (currentMode === 'cpu') ? botProf.avatar : '🎓';
+
+        if (wasRetry && retryGoal) {
+            if (fromIdx === retryGoal.bestFrom && toIdx === retryGoal.bestTo) {
+                setCoachBanner('★ SOLVED!', 'badge-brilliant', 'Spot on! ' + algMove + ' is the strongest continuation.');
+            } else {
+                setCoachBanner('✓ PLAYED', 'badge-good', 'You played ' + algMove + '. Click 🔄 Retry if you want another try!');
+            }
+        } else if (liveCoachEnabled && classification) {
+            setCoachBanner(classification.glyph + ' ' + classification.label, classification.cls, classification.coach);
+        } else {
+            var moveSeqStr = algebraicMoves.join(' ');
+            var liveOpening = '';
+            for (var oKey in OPENINGS) {
+                if (moveSeqStr.indexOf(oKey) === 0) liveOpening = OPENINGS[oKey];
+            }
+            setCoachBanner(null, null, (liveOpening ? (liveOpening + ' • ') : '') + (nextCol === 'white' ? 'White' : 'Black') + ' to move');
         }
-        setCoachBanner(null, null, (liveOpening ? (liveOpening + ' • ') : '') + (nextCol === 'white' ? 'White' : 'Black') + ' to move');
 
-        // Track 3-Fold Repetition & Update FIDE Counter
         var repKey = getRepetitionKey();
         positionCounts[repKey] = (positionCounts[repKey] || 0) + 1;
         if (fideStatusBadge) {
@@ -3185,7 +3411,6 @@
 
         if (showThreatEnabled) toggleThreatAnalysis(true);
 
-        // Check Game-Over Conditions
         if (nextLegalMoves.length === 0) {
             if (inCheck) {
                 endGame(movedCol, 'Checkmate! ' + (movedCol === 'white' ? 'White' : 'Black') + ' wins.');
@@ -3207,7 +3432,6 @@
             return;
         }
 
-        // Execute Queued Premove if valid on our turn
         var isHumanTurnNow = (!isMultiplayerActive && (currentMode === 'pvp' || currentPlayer === playerColor)) ||
                              (isMultiplayerActive && currentPlayer === multiplayerRole);
         if (isHumanTurnNow && premoves.length > 0) {
@@ -3224,7 +3448,6 @@
             }
         }
 
-        // Trigger AI Move if playing vs Stockfish/CPU
         if (!isMultiplayerActive && currentMode === 'cpu' && currentPlayer !== playerColor && !isGameOver) {
             requestAIMove();
         }
@@ -3234,17 +3457,32 @@
         if (isGameOver || aiThinking || isEditorMode || isReviewMode) return;
         aiThinking = true;
         var aiSide = currentPlayer;
-        var diffElo = parseInt(currentDifficulty, 10) || 1600;
-        var searchDepth = diffElo <= 600 ? 1 : (diffElo <= 1000 ? 2 : (diffElo <= 1500 ? 3 : (diffElo <= 1900 ? 6 : 10)));
+        var prof = BOT_PROFILES[currentDifficulty] || BOT_PROFILES['1500'];
+        var searchDepth = prof.depth || 4;
 
         setTimeout(function() {
             if (isGameOver || isEditorMode) { aiThinking = false; return; }
             var allMoves = getAllLegalMoveObjects(aiSide, board);
             if (allMoves.length === 0) { aiThinking = false; return; }
 
-            // Lower ELO personalities occasionally play sub-optimal human-like moves
-            if (diffElo <= 800 && Math.random() < (diffElo <= 450 ? 0.55 : 0.28)) {
-                var randPick = allMoves[Math.floor(Math.random() * Math.min(allMoves.length, 4))];
+            // Nelson (1350) Personality: Brings the Queen out early when safe
+            if (prof.style === 'queen_agro' && algebraicMoves.length <= 10) {
+                var qMoves = allMoves.filter(function(m) {
+                    return board[m.from] && board[m.from].toLowerCase() === 'q' &&
+                           getLowestAttackerValue(m.to, playerColor, board) === 0;
+                });
+                if (qMoves.length > 0 && Math.random() < 0.65) {
+                    var qPick = qMoves[Math.floor(Math.random() * qMoves.length)];
+                    aiThinking = false;
+                    executeMove(qPick.from, qPick.to, 'q', false);
+                    return;
+                }
+            }
+
+            // Human-like imperfection for lower-rated bots
+            if (prof.blunderRate > 0 && Math.random() < prof.blunderRate) {
+                var poolSize = prof.blunderRate >= 0.4 ? Math.min(allMoves.length, 6) : Math.min(allMoves.length, 3);
+                var randPick = allMoves[Math.floor(Math.random() * poolSize)];
                 aiThinking = false;
                 executeMove(randPick.from, randPick.to, 'q', false);
                 return;
@@ -3284,7 +3522,6 @@
         }
         if (textEl) textEl.textContent = reasonText;
 
-        // Calculate ELO adjustment in CPU or Online mode
         if (currentMode === 'cpu' || isMultiplayerActive) {
             var oppElo = isMultiplayerActive ? 1400 : (parseInt(currentDifficulty, 10) || 1200);
             var myCol = isMultiplayerActive ? multiplayerRole : playerColor;
@@ -3335,7 +3572,6 @@
         var h = canvas.height;
         ctx.clearRect(0, 0, w, h);
 
-        // Background & Midline
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(0, 0, w, h);
         ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
@@ -3362,7 +3598,6 @@
         ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
         ctx.fill();
 
-        // Curve Stroke
         ctx.beginPath();
         for (var j = 0; j < dataSource.length; j++) {
             var ev2 = Math.max(-8, Math.min(8, dataSource[j].evalScore || 0));
@@ -3374,7 +3609,6 @@
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Active Ply Cursor in Review Mode
         var activeIdx = isReviewMode ? reviewIndex : (dataSource.length - 1);
         var cx = activeIdx * stepX;
         ctx.strokeStyle = '#f5c542';
@@ -3385,7 +3619,6 @@
         ctx.stroke();
     }
 
-    // Click on Evaluation Graph to jump to that ply
     (function bindEvalGraphClick() {
         var canvas = document.getElementById('eval-graph-canvas');
         if (!canvas) return;
@@ -3399,7 +3632,7 @@
                 reviewGameData = gameHistoryLog.slice();
                 isReviewMode = true;
                 gameControls.style.display = 'none';
-                reviewControls.style.display = 'grid';
+                reviewControls.style.display = 'flex';
             }
             reviewIndex = targetIdx;
             applyReviewFrame(reviewIndex);
@@ -3407,14 +3640,14 @@
     })();
 
     /* =========================================================================
-       PART 5: PERSISTENT UI RENDERER, CLOCKS, REVIEW, MULTIPLAYER & INIT
+       PERSISTENT UI RENDERER, CLOCKS & REVIEW ENGINE
        ========================================================================= */
     function updateUI() {
         var themeObj = THEMES[currentTheme] || THEMES.slate;
         document.documentElement.style.setProperty('--board-dark', themeObj.dark);
         document.documentElement.style.setProperty('--board-light', themeObj.light);
 
-        confirmTray.style.display = stagedMove ? 'grid' : 'none';
+        confirmTray.style.display = stagedMove ? 'flex' : 'none';
 
         var inv = isBoardInverted();
         var wCheckIdx = isKingInCheck('white');
@@ -3436,7 +3669,7 @@
             var isLight = ((r + c) % 2 === 0);
 
             var cls = 'square ' + (isLight ? 'light' : 'dark');
-                        if (selectedIdx === lIdx) cls += ' selected';
+            if (selectedIdx === lIdx) cls += ' selected';
             if (lastMoveFrom === lIdx || lastMoveTo === lIdx) cls += ' last-move';
             if (reviewBestFrom === lIdx || reviewBestTo === lIdx) cls += ' review-best';
             if (stagedMove && (stagedMove.from === lIdx || stagedMove.to === lIdx)) cls += ' staged-sq';
@@ -3457,7 +3690,7 @@
             if (fileSpan) fileSpan.textContent = (vRow === 7) ? String.fromCharCode(97 + c) : '';
         }
 
-        // 2. Reconcile Persistent Piece DOM Nodes for Smooth Hardware-Accelerated Gliding
+        // 2. Reconcile Persistent Piece DOM Nodes
         var activeIds = {};
         for (var idx = 0; idx < 64; idx++) {
             var pieceChar = board[idx];
@@ -3494,31 +3727,35 @@
             }
         }
 
-        // 3. Render On-Board Move Classification Badge (!!, !, ★, ?!, ?, ??)
+        // 3. Render On-Board Move Classification Badge
         renderBoardMoveBadge();
 
-        // 4. Render Player Bars, Captured Pieces & Material Advantage
+        // 4. Render Player Bars, Bot Personalities & Captures
         updatePlayerBarsAndCaptures(inv);
 
         // 5. Render 2-Column Notation Move List
         renderNotationPanel();
 
-                      // 6. Render Tactical & Engine Arrows
+        // 6. Render Tactical & Engine Arrows
         renderArrows();
 
-        // 7. Hide Best Move button in P2P / Local PvP modes
+        // 7. Hide Best Move Button in P2P / Local PvP Modes
         var bestMoveBtn = document.getElementById('btn-best-move');
         if (bestMoveBtn) {
             var isP2P = isMultiplayerActive || currentMode === 'pvp';
             bestMoveBtn.style.display = isP2P ? 'none' : '';
         }
+
+        // 8. Update Opening Explorer & Retry Mistake Button
+        renderOpeningExplorer();
+        updateRetryButtonVisibility();
     }
 
     function isAnalysisOrReviewActive() {
         var analysisPane = document.getElementById('tab-pane-analysis');
         return isReviewMode || (analysisPane && analysisPane.classList.contains('active'));
     }
-    
+
     function openGameReviewModal() {
         if (algebraicMoves.length === 0) {
             showToast("Play a few moves first to generate a Game Review report!");
@@ -3537,8 +3774,7 @@
     function renderBoardMoveBadge() {
         if (!boardBadgeLayer) return;
         boardBadgeLayer.innerHTML = '';
-        // Only show on-board move badges when Reviewing or in the Analysis tab
-        if (isEditorMode || lastMoveTo === null || !isAnalysisOrReviewActive()) return;
+        if (isEditorMode || lastMoveTo === null || (!isAnalysisOrReviewActive() && !liveCoachEnabled)) return;
 
         var activeFrame = isReviewMode ? reviewGameData[reviewIndex] : gameHistoryLog[gameHistoryLog.length - 1];
         var mc = activeFrame && activeFrame.classification;
@@ -3563,7 +3799,6 @@
         var bottomCol = inv ? 'black' : 'white';
         var topCol = inv ? 'white' : 'black';
 
-        // Calculate Material Balance
         var wMat = 0, bMat = 0;
         for (var i = 0; i < 64; i++) {
             if (!board[i]) continue;
@@ -3599,13 +3834,13 @@
         if (advTopEl) advTopEl.textContent = topAdv > 0 ? ('+' + topAdv) : '';
         if (advBotEl) advBotEl.textContent = botAdv > 0 ? ('+' + botAdv) : '';
 
-        // Update Player Labels
         var nameTopEl = document.getElementById('top-name');
         var nameBotEl = document.getElementById('bottom-name');
+        var botProf = BOT_PROFILES[currentDifficulty] || BOT_PROFILES['1500'];
         var getLabelForCol = function(col) {
             var cTitle = col === 'white' ? 'White' : 'Black';
             if (isMultiplayerActive) return (col === multiplayerRole) ? (cTitle + ' (You)') : (cTitle + ' (Opponent)');
-            if (currentMode === 'cpu') return (col === playerColor) ? (cTitle + ' (You)') : ('Stockfish (' + currentDifficulty + ')');
+            if (currentMode === 'cpu') return (col === playerColor) ? (cTitle + ' (You)') : (botProf.avatar + ' ' + botProf.name);
             return cTitle + ' Player';
         };
         if (nameTopEl) nameTopEl.textContent = getLabelForCol(topCol);
@@ -3647,8 +3882,7 @@
         sanSpan.textContent = algebraicMoves[moveIdx];
         cell.appendChild(sanSpan);
 
-        // Only show move classification badges when Reviewing, Analyzing, or after Game Over
-        if (isAnalysisOrReviewActive() || isGameOver) {
+        if (isAnalysisOrReviewActive() || isGameOver || liveCoachEnabled) {
             var mc = moveClassifications[moveIdx];
             if (mc && mc.glyph) {
                 var b = document.createElement('span');
@@ -3663,7 +3897,7 @@
                 reviewGameData = gameHistoryLog.slice();
                 isReviewMode = true;
                 gameControls.style.display = 'none';
-                reviewControls.style.display = 'grid';
+                reviewControls.style.display = 'flex';
             }
             reviewIndex = moveIdx + 1;
             applyReviewFrame(reviewIndex);
@@ -3720,7 +3954,7 @@
             tTopEl.textContent = formatClock(topTime);
             tTopEl.classList.toggle('low-time', topTime !== null && topTime < 20);
         }
-                if (tBotEl) {
+        if (tBotEl) {
             tBotEl.textContent = formatClock(botTime);
             tBotEl.classList.toggle('low-time', botTime !== null && botTime < 20);
         }
@@ -3777,7 +4011,7 @@
         isReviewMode = true;
         reviewIndex = reviewGameData.length - 1;
         gameControls.style.display = 'none';
-        reviewControls.style.display = 'grid';
+        reviewControls.style.display = 'flex';
         applyReviewFrame(reviewIndex);
     }
 
@@ -3797,6 +4031,8 @@
         currentPlayer = frame.currentPlayer;
         lastMoveFrom = frame.lastMoveFrom;
         lastMoveTo = frame.lastMoveTo;
+        if (frame.castlingRights) castlingRights = Object.assign({}, frame.castlingRights);
+        epSquare = frame.epSquare !== undefined ? frame.epSquare : null;
 
         var mc = frame.classification;
         if (mc) {
@@ -3821,7 +4057,7 @@
         reviewBestFrom = null;
         reviewBestTo = null;
         reviewControls.style.display = 'none';
-        gameControls.style.display = 'grid';
+        gameControls.style.display = 'flex';
         if (gameHistoryLog.length > 0) {
             var latest = gameHistoryLog[gameHistoryLog.length - 1];
             board = latest.board.slice();
@@ -3838,8 +4074,23 @@
     }
 
     /* =========================================================================
-       LIVE GAME CONTROLS: UNDO, DRAW, RESIGN, FEN & PGN
+       LIVE GAME CONTROLS: UNDO, DRAW, RESIGN, FEN, PGN & EXPANSION FEATURES
        ========================================================================= */
+        function rebuildPositionCountsFromHistory() {
+        positionCounts = {};
+        var savedB = board.slice(), savedC = Object.assign({}, castlingRights), savedEp = epSquare, savedP = currentPlayer;
+        for (var i = 0; i < gameHistoryLog.length; i++) {
+            var f = gameHistoryLog[i];
+            board = f.board;
+            castlingRights = f.castlingRights;
+            epSquare = f.epSquare;
+            currentPlayer = f.currentPlayer;
+            var k = getRepetitionKey();
+            positionCounts[k] = (positionCounts[k] || 0) + 1;
+        }
+        board = savedB; castlingRights = savedC; epSquare = savedEp; currentPlayer = savedP;
+    }
+
     function undoLastTurn() {
         if (isMultiplayerActive) {
             showToast("Undo is disabled in Online Multiplayer matches.");
@@ -3847,6 +4098,8 @@
         }
         if (isReviewMode || isEditorMode || gameHistoryLog.length <= 1) return;
         isGameOver = false;
+        aiThinking = false;
+        retryPuzzleState = null;
         var stepsBack = (currentMode === 'cpu' && currentPlayer === playerColor && gameHistoryLog.length >= 3) ? 2 : 1;
         for (var i = 0; i < stepsBack; i++) {
             if (gameHistoryLog.length > 1) {
@@ -3871,6 +4124,7 @@
         reviewBestTo = null;
         selectedIdx = null;
         validMoves = [];
+        rebuildPositionCountsFromHistory();
         updateEvalBar(restored.evalScore || 0, null);
         setCoachBanner(null, null, 'Move taken back.');
         updateUI();
@@ -3888,9 +4142,9 @@
             var curEv = staticEvaluateBoard(board);
             var aiScore = (playerColor === 'white') ? -curEv : curEv;
             if (aiScore < 0.8) {
-                endGame('draw', 'Draw agreed with Stockfish AI.');
+                endGame('draw', 'Draw agreed with Bot AI.');
             } else {
-                showToast("Stockfish AI declined the draw offer!");
+                showToast("Bot opponent declined the draw offer!");
             }
         } else {
             endGame('draw', 'Draw by mutual agreement.');
@@ -3942,28 +4196,427 @@
         showToast("FEN copied to clipboard!");
     }
 
-    function exportPGN() {
+    /* --- 1. RETRY MISTAKE / BLUNDER PUZZLE TRAINER --- */
+        function getRetryTargetHistoryIndex() {
+        if (isReviewMode) {
+            var rMc = moveClassifications[reviewIndex - 1];
+            if (rMc && (rMc.type === 'inaccuracy' || rMc.type === 'mistake' || rMc.type === 'blunder')) {
+                return reviewIndex;
+            }
+            return -1;
+        }
+        var lastIdx = moveClassifications.length - 1;
+        if (lastIdx < 0) return -1;
+        var lastMc = moveClassifications[lastIdx];
+        if (lastMc && (lastMc.type === 'inaccuracy' || lastMc.type === 'mistake' || lastMc.type === 'blunder')) {
+            return lastIdx + 1;
+        }
+        // In CPU mode, if the Bot just replied, check the player's move 1 ply earlier
+        if (currentMode === 'cpu' && currentPlayer === playerColor && lastIdx >= 1) {
+            var humanMc = moveClassifications[lastIdx - 1];
+            if (humanMc && (humanMc.type === 'inaccuracy' || humanMc.type === 'mistake' || humanMc.type === 'blunder')) {
+                return lastIdx;
+            }
+        }
+        return -1;
+    }
+
+    function updateRetryButtonVisibility() {
+        var btn = document.getElementById('btn-retry-mistake');
+        if (!btn) return;
+        if (retryPuzzleState && retryPuzzleState.active) {
+            btn.style.display = 'inline-block';
+            btn.textContent = '💡 Solution';
+            return;
+        }
+        var targetHIdx = getRetryTargetHistoryIndex();
+        if (targetHIdx >= 1 && !isMultiplayerActive) {
+            var mc = moveClassifications[targetHIdx - 1];
+            btn.style.display = 'inline-block';
+            btn.textContent = '🔄 Retry ' + (mc ? mc.glyph : '');
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startRetryMistakePuzzle() {
+        if (retryPuzzleState && retryPuzzleState.active) {
+            reviewBestFrom = retryPuzzleState.bestFrom;
+            reviewBestTo = retryPuzzleState.bestTo;
+            var p = board[reviewBestFrom] || 'P';
+            var san = getAlgebraic(reviewBestFrom, reviewBestTo, p, !!board[reviewBestTo], null);
+            setCoachBanner('★ SOLUTION', 'badge-best', 'The strongest move is ' + san + '. Play it on the board!');
+            retryPuzzleState.active = false;
+            renderArrows();
+            updateUI();
+            return;
+        }
+
+        var targetHistoryIdx = getRetryTargetHistoryIndex();
+        if (targetHistoryIdx < 1) return;
+        var sourceFrames = isReviewMode ? reviewGameData : gameHistoryLog;
+        var badFrame = sourceFrames[targetHistoryIdx];
+        var prevFrame = sourceFrames[targetHistoryIdx - 1];
+        if (!badFrame || !prevFrame || !badFrame.classification) return;
+
+        if (isReviewMode) exitReview();
+        aiThinking = false;
+
+        while (gameHistoryLog.length > targetHistoryIdx) {
+            gameHistoryLog.pop();
+            algebraicMoves.pop();
+            moveClassifications.pop();
+        }
+
+        board = prevFrame.board.slice();
+        pieceIds = prevFrame.pieceIds.slice();
+        capturedWhite = prevFrame.capturedWhite.slice();
+        capturedBlack = prevFrame.capturedBlack.slice();
+        castlingRights = Object.assign({}, prevFrame.castlingRights);
+        epSquare = prevFrame.epSquare;
+        halfMoveClock = prevFrame.halfMoveClock;
+        fullMoveNumber = prevFrame.fullMoveNumber;
+        currentPlayer = prevFrame.currentPlayer;
+        lastMoveFrom = prevFrame.lastMoveFrom;
+        lastMoveTo = prevFrame.lastMoveTo;
+        reviewBestFrom = null;
+        reviewBestTo = null;
+        isGameOver = false;
+        rebuildPositionCountsFromHistory();
+
+        retryPuzzleState = {
+            active: true,
+            bestFrom: badFrame.classification.bestFrom,
+            bestTo: badFrame.classification.bestTo,
+            badAlg: badFrame.algMove
+        };
+
+        setCoachBanner('🎯 RETRY', 'badge-great', 'You played ' + badFrame.algMove + '. Find the stronger move on the board!');
+        updateUI();
+        drawEvaluationGraph();
+    }
+
+    /* --- 2. MASTER OPENING EXPLORER WITH WIN-RATE BARS --- */
+    function renderOpeningExplorer() {
+        var box = document.getElementById('opening-explorer-box');
+        if (!box) return;
+        var activePlyCount = isReviewMode ? reviewIndex : algebraicMoves.length;
+        var seq = algebraicMoves.slice(0, activePlyCount).join(' ');
+        var candidates = OPENING_BOOK_TREE[seq];
+
+        if (!candidates || activePlyCount > 10) {
+            box.style.display = 'none';
+            return;
+        }
+        box.style.display = 'flex';
+        var opTitle = OPENINGS[seq] || (seq === '' ? 'Starting Book Explorer' : 'Opening Book');
+        var html = '<div class="explorer-header"><span>📖 ' + opTitle + '</span><span>W / D / B %</span></div>';
+
+        candidates.forEach(function(item) {
+            html += '<div class="explorer-row" onclick="playExplorerBookMove(\'' + item.san + '\')" title="' + item.name + '">' +
+                '<span class="explorer-san">' + item.san + '</span>' +
+                '<div class="winrate-bar">' +
+                    '<div class="wr-w" style="width:' + item.w + '%"></div>' +
+                    '<div class="wr-d" style="width:' + item.d + '%"></div>' +
+                    '<div class="wr-b" style="width:' + item.b + '%"></div>' +
+                '</div>' +
+                '<span class="wr-nums">' + item.w + '/' + item.d + '/' + item.b + '</span>' +
+            '</div>';
+        });
+        box.innerHTML = html;
+    }
+
+    function playExplorerBookMove(sanStr) {
+        if (isGameOver || isReviewMode || isEditorMode) return;
+        var legal = getAllLegalMoveObjects(currentPlayer, board);
+        for (var i = 0; i < legal.length; i++) {
+            var m = legal[i];
+            var p = board[m.from];
+            var candSan = getAlgebraic(m.from, m.to, p, !!board[m.to], null);
+            if (candSan === sanStr) {
+                executeMove(m.from, m.to, 'q', false);
+                return;
+            }
+        }
+    }
+
+    /* --- 3. OFFLINE VOICE COACH (TTS + VOICE MOVE RECOGNITION) --- */
+    function toggleVoiceCoachTTS() {
+        voiceCoachTTSEnabled = !voiceCoachTTSEnabled;
+        var btn = document.getElementById('btn-voice-tts');
+        if (btn) btn.textContent = voiceCoachTTSEnabled ? '🔊' : '🔇';
+        showToast(voiceCoachTTSEnabled ? "🔊 Voice Coach Enabled" : "🔇 Voice Coach Muted");
+        if (voiceCoachTTSEnabled) speakCoachMessage(coachTextEl.textContent);
+        else if (window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+
+    function speakCoachMessage(text) {
+        if (!voiceCoachTTSEnabled || !window.speechSynthesis || !text) return;
+        try {
+            window.speechSynthesis.cancel();
+            var clean = text
+                .replace(/!!/g, ' brilliant, ')
+                .replace(/\?\?/g, ' blunder, ')
+                .replace(/\?!/g, ' inaccuracy, ')
+                .replace(/O-O-O/g, 'queenside castle')
+                .replace(/O-O/g, 'kingside castle')
+                .replace(/\+/g, ' check')
+                .replace(/#/g, ' checkmate');
+            var utter = new SpeechSynthesisUtterance(clean);
+            utter.rate = 1.05;
+            window.speechSynthesis.speak(utter);
+        } catch (e) {}
+    }
+
+    function listenForVoiceMove() {
+        var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {
+            showToast("Voice recognition is not supported on this browser.");
+            return;
+        }
+        var micBtn = document.getElementById('btn-voice-mic');
+        var rec = new SpeechRec();
+        rec.lang = 'en-US';
+        rec.interimResults = false;
+        rec.maxAlternatives = 3;
+
+        if (micBtn) micBtn.classList.add('listening');
+        showToast("🎙️ Speak move (e.g. 'e4', 'Knight f3', 'Castle')...");
+
+        rec.onresult = function(ev) {
+            if (micBtn) micBtn.classList.remove('listening');
+            var transcript = ev.results[0][0].transcript.toLowerCase().trim();
+            if (!tryExecuteSpokenMove(transcript)) {
+                showToast("Heard '" + transcript + "' — couldn't match a legal move.");
+            }
+        };
+        rec.onerror = function() {
+            if (micBtn) micBtn.classList.remove('listening');
+            showToast("Microphone input cancelled.");
+        };
+        rec.onend = function() {
+            if (micBtn) micBtn.classList.remove('listening');
+        };
+        rec.start();
+    }
+
+    function tryExecuteSpokenMove(spoken) {
+        var legal = getAllLegalMoveObjects(currentPlayer, board);
+        var norm = spoken
+            .replace(/knight|night/g, 'N')
+            .replace(/bishop/g, 'B')
+            .replace(/rook/g, 'R')
+            .replace(/queen/g, 'Q')
+            .replace(/king/g, 'K')
+            .replace(/takes|captures|x/g, 'x')
+            .replace(/\s+/g, '');
+
+        for (var i = 0; i < legal.length; i++) {
+            var m = legal[i];
+            var san = getAlgebraic(m.from, m.to, board[m.from], !!board[m.to], null);
+            var cleanSan = san.replace(/[+#]/g, '');
+            if ((spoken.indexOf('castle') !== -1 && (cleanSan === 'O-O' || cleanSan === 'O-O-O')) ||
+                cleanSan.toLowerCase() === norm.toLowerCase() ||
+                idxToSquareName(m.to) === norm.slice(-2).toLowerCase()) {
+                executeMove(m.from, m.to, 'q', false);
+                showToast("🎙️ Played " + san);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* --- 4. ENDGAME TRAINER DRILLS --- */
+    function loadEndgameDrill(drillKey) {
+        var drill = ENDGAME_DRILLS[drillKey];
+        if (!drill) return;
+        currentMode = 'cpu';
+        isMultiplayerActive = false;
+        parseFENPosition(drill.fen);
+        playerColor = currentPlayer;
+        isGameOver = false;
+        isReviewMode = false;
+        switchTab('moves');
+        setCoachBanner('🎯 DRILL', 'badge-great', drill.title);
+        showToast("Endgame Drill Loaded!");
+        startTimer();
+    }
+
+    /* --- 5. FULL PGN IMPORTER & ANNOTATED PGN EXPORTER --- */
+            function importPGNGame() {
+        var inp = document.getElementById('pgn-input');
+        if (!inp || !inp.value.trim()) {
+            showToast("Paste a PGN move list first!");
+            return;
+        }
+        var raw = inp.value
+            .replace(/\[.*?\]/g, ' ')
+            .replace(/\{.*?\}/g, ' ')
+            .replace(/\d+\.(\.\.)?/g, ' ')
+            .replace(/(1-0|0-1|1\/2-1\/2|\*)/g, ' ')
+            .trim();
+
+        var tokens = raw.split(/\s+/).filter(Boolean);
+        if (tokens.length === 0) {
+            showToast("No valid PGN moves found.");
+            return;
+        }
+
+        var prevMode = currentMode;
+        var prevSound = soundEnabled;
+        currentMode = 'pvp'; // Prevent CPU from firing mid-import
+        soundEnabled = false;
+        initGame();
+
+        var importedCount = 0;
+        for (var t = 0; t < tokens.length; t++) {
+            var targetSan = tokens[t].replace(/[+#?!]/g, '');
+            var promoChar = null;
+            if (targetSan.indexOf('=') !== -1) {
+                var parts = targetSan.split('=');
+                targetSan = parts[0];
+                promoChar = parts[1].toLowerCase();
+            }
+
+            var legal = getAllLegalMoveObjects(currentPlayer, board);
+            var matched = null;
+            for (var i = 0; i < legal.length; i++) {
+                var m = legal[i];
+                var candSan = getAlgebraic(m.from, m.to, board[m.from], !!board[m.to], null).replace(/[+#]/g, '');
+                if (candSan === targetSan) {
+                    matched = m;
+                    break;
+                }
+            }
+            if (!matched) break;
+            executeMove(matched.from, matched.to, promoChar || 'q', true);
+            importedCount++;
+        }
+
+        currentMode = prevMode;
+        soundEnabled = prevSound;
+        playSound('move');
+        inp.value = '';
+        switchTab('analysis');
+        updateUI();
+        drawEvaluationGraph();
+        showToast("📥 Imported " + importedCount + " plies with full accuracy graph!");
+    }
+
+
+    function exportAnnotatedPGN() {
         var dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
-        var pgn = '[Event "Chess Master Match"]\n[Date "' + dateStr + '"]\n';
-        pgn += '[White "' + (playerColor === 'white' ? 'Player' : 'Opponent') + '"]\n';
-        pgn += '[Black "' + (playerColor === 'black' ? 'Player' : 'Opponent') + '"]\n\n';
+        var pgn = '[Event "Chess Master Annotated Game"]\n[Date "' + dateStr + '"]\n';
+        pgn += '[White "' + (playerColor === 'white' ? 'Player' : 'Stockfish/Opponent') + '"]\n';
+        pgn += '[Black "' + (playerColor === 'black' ? 'Player' : 'Stockfish/Opponent') + '"]\n\n';
         var body = '';
-        for (var i = 0; i < algebraicMoves.length; i += 2) {
-            body += (Math.floor(i / 2) + 1) + '. ' + algebraicMoves[i] + ' ';
-            if (i + 1 < algebraicMoves.length) body += algebraicMoves[i + 1] + ' ';
+        for (var i = 0; i < algebraicMoves.length; i++) {
+            if (i % 2 === 0) body += (Math.floor(i / 2) + 1) + '. ';
+            var san = algebraicMoves[i];
+            var mc = moveClassifications[i];
+            var frame = gameHistoryLog[i + 1];
+            var ev = frame && typeof frame.evalScore === 'number' ? frame.evalScore.toFixed(2) : '0.00';
+            var glyph = (mc && mc.glyph && mc.glyph !== '✓' && mc.glyph !== '📖') ? mc.glyph : '';
+            var comment = (mc && mc.coach) ? (' { [%eval ' + ev + '] ' + mc.coach + ' } ') : ' ';
+            body += san + glyph + comment;
         }
         pgn += body.trim();
         var blob = new Blob([pgn], { type: 'text/plain;charset=utf-8' });
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'chess-match-' + Date.now() + '.pgn';
+        a.download = 'chess-annotated-' + Date.now() + '.pgn';
         a.click();
-        showToast("PGN file downloaded!");
+        showToast("Annotated PGN downloaded!");
     }
 
     /* =========================================================================
-       SETTINGS, MATCH HISTORY & ADDRESS BOOK MODALS
+       SAVED STATES, SETTINGS, MATCH HISTORY & ADDRESS BOOK MODALS
        ========================================================================= */
+    function autoSaveLiveState() {
+        if (isMultiplayerActive || isEditorMode || algebraicMoves.length === 0) return;
+        try {
+            var state = {
+                fen: getBoardFEN(),
+                algebraicMoves: algebraicMoves,
+                moveClassifications: moveClassifications,
+                gameHistoryLog: gameHistoryLog,
+                capturedWhite: capturedWhite,
+                capturedBlack: capturedBlack,
+                playerColor: playerColor,
+                currentDifficulty: currentDifficulty,
+                currentMode: currentMode,
+                timerWhite: timerWhite,
+                timerBlack: timerBlack,
+                savedAt: new Date().toLocaleTimeString()
+            };
+            localStorage.setItem('chessActiveState', JSON.stringify(state));
+        } catch (e) {}
+    }
+
+    function saveCurrentGameStateSlot() {
+        if (algebraicMoves.length === 0) {
+            showToast("Make at least 1 move before saving a state!");
+            return;
+        }
+        try {
+            var slots = JSON.parse(localStorage.getItem('chessSavedStateSlots') || '[]');
+            var botName = (BOT_PROFILES[currentDifficulty] && BOT_PROFILES[currentDifficulty].name) || ('AI ' + currentDifficulty);
+            var label = (currentMode === 'cpu' ? ('vs ' + botName) : 'Pass & Play') + ' • Move ' + fullMoveNumber;
+            slots.unshift({
+                label: label,
+                date: new Date().toLocaleString(),
+                fen: getBoardFEN(),
+                algebraicMoves: algebraicMoves.slice(),
+                moveClassifications: moveClassifications.slice(),
+                gameHistoryLog: gameHistoryLog.slice(),
+                capturedWhite: capturedWhite.slice(),
+                capturedBlack: capturedBlack.slice(),
+                playerColor: playerColor,
+                currentDifficulty: currentDifficulty,
+                currentMode: currentMode,
+                timerWhite: timerWhite,
+                timerBlack: timerBlack
+            });
+            if (slots.length > 10) slots.length = 10;
+            localStorage.setItem('chessSavedStateSlots', JSON.stringify(slots));
+            showToast("💾 Game state saved! Open 📋 to load anytime.");
+        } catch (e) {
+            showToast("Storage full — clear old states in 📋.");
+        }
+    }
+
+        function loadSavedStateObject(st) {
+        if (!st || !st.fen) return;
+        parseFENPosition(st.fen);
+        algebraicMoves = st.algebraicMoves || [];
+        moveClassifications = st.moveClassifications || [];
+        gameHistoryLog = st.gameHistoryLog || [];
+        capturedWhite = st.capturedWhite || [];
+        capturedBlack = st.capturedBlack || [];
+        playerColor = st.playerColor || 'white';
+        currentDifficulty = st.currentDifficulty || currentDifficulty;
+        currentMode = st.currentMode || currentMode;
+        timerWhite = st.timerWhite !== undefined ? st.timerWhite : timerWhite;
+        timerBlack = st.timerBlack !== undefined ? st.timerBlack : timerBlack;
+        if (gameHistoryLog.length > 0) {
+            var lastF = gameHistoryLog[gameHistoryLog.length - 1];
+            lastMoveFrom = lastF.lastMoveFrom;
+            lastMoveTo = lastF.lastMoveTo;
+            updateEvalBar(lastF.evalScore || 0, null);
+        }
+        rebuildPositionCountsFromHistory();
+        isGameOver = false;
+        isReviewMode = false;
+        closeHistory();
+        updateUI();
+        drawEvaluationGraph();
+        startTimer();
+        showToast("▶️ Saved state resumed!");
+        if (!isMultiplayerActive && currentMode === 'cpu' && currentPlayer !== playerColor) {
+            requestAIMove();
+        }
+    }
+
     function openSettings() {
         document.getElementById('set-color').value = playerColorSetting;
         document.getElementById('set-mode').value = currentMode;
@@ -3974,6 +4627,8 @@
         document.getElementById('set-theme').value = currentTheme;
         document.getElementById('set-explorer').value = openingExplorerSetting;
         document.getElementById('set-sound').value = soundEnabled ? 'on' : 'off';
+        var coachSel = document.getElementById('set-coach-mode');
+        if (coachSel) coachSel.value = liveCoachEnabled ? 'on' : 'review';
         settingsModal.style.display = 'flex';
     }
 
@@ -3987,6 +4642,8 @@
         currentTheme = document.getElementById('set-theme').value;
         openingExplorerSetting = document.getElementById('set-explorer').value;
         soundEnabled = (document.getElementById('set-sound').value === 'on');
+        var coachSel = document.getElementById('set-coach-mode');
+        if (coachSel) liveCoachEnabled = (coachSel.value === 'on');
 
         saveSettingsToStorage();
         settingsModal.style.display = 'none';
@@ -4015,11 +4672,67 @@
         var listEl = document.getElementById('history-list');
         if (!listEl) return;
         listEl.innerHTML = '';
+
+        var autoState = JSON.parse(localStorage.getItem('chessActiveState') || 'null');
+        var slots = JSON.parse(localStorage.getItem('chessSavedStateSlots') || '[]');
+
+        var saveBtnRow = document.createElement('div');
+        saveBtnRow.style.marginBottom = '10px';
+        saveBtnRow.innerHTML = '<button class="action-btn primary" style="width:100%;" onclick="saveCurrentGameStateSlot(); openHistory();">💾 Save Current Board State</button>';
+        listEl.appendChild(saveBtnRow);
+
+        if (autoState && autoState.algebraicMoves && autoState.algebraicMoves.length > 0) {
+            var autoRow = document.createElement('div');
+            autoRow.className = 'history-item';
+            autoRow.style.borderColor = 'var(--accent)';
+            autoRow.innerHTML = '<div><strong>⚡ Auto-Saved Live Game</strong><br><span style="color:var(--text-muted);font-size:0.72rem;">' + autoState.algebraicMoves.length + ' plies • Saved ' + (autoState.savedAt || '') + '</span></div>';
+            var resumeBtn = document.createElement('button');
+            resumeBtn.className = 'action-btn primary';
+            resumeBtn.style.flexGrow = '0';
+            resumeBtn.style.padding = '5px 10px';
+            resumeBtn.textContent = '▶️ Resume';
+            resumeBtn.onclick = function() { loadSavedStateObject(autoState); };
+            autoRow.appendChild(resumeBtn);
+            listEl.appendChild(autoRow);
+        }
+
+        slots.forEach(function(slot, sIdx) {
+            var sRow = document.createElement('div');
+            sRow.className = 'history-item';
+            sRow.innerHTML = '<div><strong>💾 ' + slot.label + '</strong><br><span style="color:var(--text-muted);font-size:0.72rem;">' + slot.date + '</span></div>';
+            var btnWrap = document.createElement('div');
+            btnWrap.style.display = 'flex';
+            btnWrap.style.gap = '4px';
+
+            var loadBtn = document.createElement('button');
+            loadBtn.className = 'action-btn primary';
+            loadBtn.style.padding = '5px 9px';
+            loadBtn.textContent = 'Load';
+            loadBtn.onclick = function() { loadSavedStateObject(slot); };
+
+            var delBtn = document.createElement('button');
+            delBtn.className = 'action-btn danger';
+            delBtn.style.padding = '5px 8px';
+            delBtn.textContent = '✕';
+            delBtn.onclick = function() {
+                slots.splice(sIdx, 1);
+                localStorage.setItem('chessSavedStateSlots', JSON.stringify(slots));
+                openHistory();
+            };
+            btnWrap.appendChild(loadBtn);
+            btnWrap.appendChild(delBtn);
+            sRow.appendChild(btnWrap);
+            listEl.appendChild(sRow);
+        });
+
         var logs = JSON.parse(localStorage.getItem('chessSavedMatches') || '[]');
-        if (logs.length === 0) {
-            listEl.innerHTML = '<div style="color:var(--text-muted);padding:12px;">No saved matches yet. Finish a game to review it anytime!</div>';
-        } else {
-            logs.forEach(function(item, idx) {
+        if (logs.length > 0) {
+            var hdr = document.createElement('div');
+            hdr.style.cssText = 'font-size:0.75rem; font-weight:800; color:var(--accent); margin:10px 0 6px; text-align:left;';
+            hdr.textContent = 'COMPLETED MATCHES';
+            listEl.appendChild(hdr);
+
+            logs.forEach(function(item) {
                 var row = document.createElement('div');
                 row.className = 'history-item';
                 var info = document.createElement('div');
@@ -4038,7 +4751,7 @@
                         isReviewMode = true;
                         reviewIndex = reviewGameData.length - 1;
                         gameControls.style.display = 'none';
-                        reviewControls.style.display = 'grid';
+                        reviewControls.style.display = 'flex';
                         applyReviewFrame(reviewIndex);
                     }
                 };
@@ -4190,7 +4903,7 @@
             container.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;">No saved peers yet.</div>';
             return;
         }
-        friendsList.forEach(function(f, idx) {
+        friendsList.forEach(function(f) {
             var row = document.createElement('div');
             row.className = 'friend-item';
             var label = document.createElement('span');
@@ -4267,9 +4980,10 @@
         reviewBestTo = null;
         threatFrom = null;
         threatTo = null;
+        retryPuzzleState = null;
 
         reviewControls.style.display = 'none';
-        gameControls.style.display = 'grid';
+        gameControls.style.display = 'flex';
 
         if (!isMultiplayerActive) {
             if (playerColorSetting === 'random') {
@@ -4302,7 +5016,12 @@
 
         parseTimeControl(timeControlSetting);
         updateEvalBar(0, null);
-        setCoachBanner('READY', 'badge-best', 'New match started. Click 💡 Best Move anytime for engine guidance.');
+
+        var botProf = BOT_PROFILES[currentDifficulty] || BOT_PROFILES['1500'];
+        var avatarEl = document.getElementById('coach-avatar');
+        if (avatarEl) avatarEl.textContent = (currentMode === 'cpu' && !isMultiplayerActive) ? botProf.avatar : '🎓';
+
+        setCoachBanner('READY', 'badge-best', 'Coach Ready: Make a move for live feedback, or use 📖 Opening Explorer below.');
 
         if (isEditorMode) switchTab('moves');
         updateUI();
@@ -4323,7 +5042,7 @@
                 isReviewMode = true;
                 reviewIndex = reviewGameData.length - 1;
                 gameControls.style.display = 'none';
-                reviewControls.style.display = 'grid';
+                reviewControls.style.display = 'flex';
             }
             reviewStep(-1);
         } else if (e.key === 'ArrowRight' && isReviewMode) {
@@ -4337,8 +5056,20 @@
         }
     });
 
+    // Online / Offline Network Badge Sync
+    function updateNetworkBadge() {
+        var dot = document.getElementById('network-dot');
+        var txt = document.getElementById('network-text');
+        var online = navigator.onLine;
+        if (dot) dot.classList.toggle('offline', !online);
+        if (txt) txt.textContent = online ? 'Online' : 'Offline';
+    }
+    window.addEventListener('online', updateNetworkBadge);
+    window.addEventListener('offline', updateNetworkBadge);
+
     // Boot Application on Window Load
     window.addEventListener('DOMContentLoaded', function() {
+        updateNetworkBadge();
         initBoardDOM();
         initGame();
 
