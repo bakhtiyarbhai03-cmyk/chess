@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-master-v9.2';
+const CACHE_NAME = 'chess-master-v10';
 
 const CORE_ASSETS = [
     './',
