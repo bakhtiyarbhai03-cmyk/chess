@@ -3386,13 +3386,15 @@
             }
         } else if (liveCoachEnabled && classification) {
             setCoachBanner(classification.glyph + ' ' + classification.label, classification.cls, classification.coach);
-        } else {
+                } else {
             var moveSeqStr = algebraicMoves.join(' ');
-            var liveOpening = '';
-            for (var oKey in OPENINGS) {
-                if (moveSeqStr.indexOf(oKey) === 0) liveOpening = OPENINGS[oKey];
-            }
-            setCoachBanner(null, null, (liveOpening ? (liveOpening + ' • ') : '') + (nextCol === 'white' ? 'White' : 'Black') + ' to move');
+            var exactOpening = OPENINGS[moveSeqStr] || '';
+            var moveLabel = 'Played ' + algMove;
+            setCoachBanner(
+                exactOpening ? '📖 BOOK' : null,
+                exactOpening ? 'badge-book' : null,
+                (exactOpening ? (exactOpening + ' (' + algMove + ') • ') : (moveLabel + ' • ')) + (nextCol === 'white' ? 'White' : 'Black') + ' to move'
+            );
         }
 
         var repKey = getRepetitionKey();
@@ -4221,9 +4223,14 @@
         return -1;
     }
 
-    function updateRetryButtonVisibility() {
+        function updateRetryButtonVisibility() {
         var btn = document.getElementById('btn-retry-mistake');
         if (!btn) return;
+        // Hide Retry button during live games if Coach is set to "Only in Review"
+        if (!liveCoachEnabled && !isReviewMode) {
+            btn.style.display = 'none';
+            return;
+        }
         if (retryPuzzleState && retryPuzzleState.active) {
             btn.style.display = 'inline-block';
             btn.textContent = '💡 Solution';
