@@ -5536,6 +5536,16 @@
             joinMultiplayer(params.get('room'));
         }
     });
+        // Register Service Worker & auto-reload when a new sw.js takes over
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('./sw.js').then(function(reg) {
+                reg.update();
+            }).catch(function(err) {
+                console.warn('SW registration failed:', err);
+            });
+        });
+    }    
 </script>
 </body>
 </html>
