@@ -1398,20 +1398,321 @@
         "e4 e5 Nf3 Nf6": "Petrov's Defense", "e4 e5 Nf3 d6": "Philidor Defense", "d4 Nf6 c4 e6 Nc3 Bb4": "Nimzo-Indian Defense"
     };
 
-    const BOT_PROFILES = {
-        '250':  { name: 'Martin (250)', avatar: '👶', depth: 1, blunderRate: 0.60, style: 'random' },
-        '450':  { name: 'Elani (450)', avatar: '🌱', depth: 1, blunderRate: 0.42, style: 'casual' },
-        '700':  { name: 'Aron (700)', avatar: '🛡️', depth: 2, blunderRate: 0.28, style: 'casual' },
-        '1000': { name: 'Emir (1000)', avatar: '⚔️', depth: 2, blunderRate: 0.16, style: 'balanced' },
-        '1200': { name: 'Sven (1200)', avatar: '🏛️', depth: 3, blunderRate: 0.10, style: 'solid' },
-        '1350': { name: 'Nelson (1350)', avatar: '👑', depth: 3, blunderRate: 0.08, style: 'queen_agro' },
-        '1500': { name: 'Coach Dan (1500)', avatar: '🎓', depth: 4, blunderRate: 0.05, style: 'teacher' },
-        '1700': { name: 'Isabel (1700)', avatar: '🎯', depth: 5, blunderRate: 0.02, style: 'tactical' },
-        '1950': { name: 'Wally (1950)', avatar: '🧠', depth: 6, blunderRate: 0.0, style: 'positional' },
-        '2200': { name: 'Master Li (2200)', avatar: '⚡', depth: 8, blunderRate: 0.0, style: 'master' },
-        '2500': { name: 'GM Nova (2500)', avatar: '🔥', depth: 10, blunderRate: 0.0, style: 'gm' },
-        '2800': { name: 'Stockfish (2800)', avatar: '🤖', depth: 12, blunderRate: 0.0, style: 'max' }
+        /* =========================================================================
+       UPGRADED BOT PROFILES (TRUE UCI SKILL LEVELS & MOVETIME)
+       ========================================================================= */
+    var BOT_PROFILES = {
+        '400':  { name: 'Martin (400)',   avatar: '🐣', skill: 0,  depth: 2,  movetime: 250,  blunderRate: 0.45, style: 'random' },
+        '800':  { name: 'scaredyCat (800)',avatar: '🐱', skill: 3,  depth: 4,  movetime: 400,  blunderRate: 0.22, style: 'passive' },
+        '1200': { name: 'Aaron (1200)',   avatar: '👦', skill: 7,  depth: 7,  movetime: 650,  blunderRate: 0.08, style: 'balanced' },
+        '1350': { name: 'Nelson (1350)',  avatar: '👑', skill: 10, depth: 9,  movetime: 800,  blunderRate: 0.04, style: 'queen_agro' },
+        '1500': { name: 'Antonio (1500)', avatar: '🧔', skill: 13, depth: 11, movetime: 1000, blunderRate: 0.0,  style: 'positional' },
+        '2000': { name: 'Wally (2000)',   avatar: '🦉', skill: 17, depth: 14, movetime: 1400, blunderRate: 0.0,  style: 'master' },
+        '2800': { name: 'Stockfish (2800)',avatar: '🤖', skill: 20, depth: 18, movetime: 2000, blunderRate: 0.0,  style: 'gm' }
     };
+
+    /* =========================================================================
+       LOCAL REPOSITORY STOCKFISH.JS WORKER + REAL-TIME UCI EVAL STREAM
+       ========================================================================= */
+    var stockfishWorker = null;
+    var sfReady = false;
+    var sfPendingCallback = null;
+    var sfSearchTimer = null;
+    var sfCurrentTurnColor = 'white';
+    var sfLastInfoEvalWhite = null;
+
+    function initStockfishWorker() {
+        if (stockfishWorker) return;
+
+        // 1. Load ./stockfish.js directly from your local repository first
+        try {
+            stockfishWorker = new Worker('./stockfish.js');
+            bindStockfishEvents(stockfishWorker, 'Local Repository stockfish.js');
+        } catch (localErr) {
+            tryLoadFallbackCDNStockfish();
+        }
+    }
+
+    function tryLoadFallbackCDNStockfish() {
+        try {
+            var blobCode = "importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');";
+            var blob = new Blob([blobCode], { type: 'application/javascript' });
+            stockfishWorker = new Worker(URL.createObjectURL(blob));
+            bindStockfishEvents(stockfishWorker, 'CDN stockfish.js');
+        } catch (cdnErr) {
+            sfReady = false;
+            console.warn('Stockfish Worker failed to load:', cdnErr);
+        }
+    }
+
+    function bindStockfishEvents(worker, sourceLabel) {
+        worker.onmessage = function(e) {
+            var line = (typeof e.data === 'string') ? e.data.trim() : '';
+            if (!line) return;
+
+            if (line === 'uciok') {
+                sfReady = true;
+                worker.postMessage('setoption name Threads value 2');
+                worker.postMessage('setoption name Hash value 32');
+                worker.postMessage('isready');
+                console.log('✅ Stockfish Engine Ready (' + sourceLabel + ')');
+                return;
+            }
+
+            // Parse live UCI evaluation ("info depth 14 ... score cp 145 ...")
+            if (line.indexOf('info depth ') === 0 && line.indexOf('score ') !== -1) {
+                var povSign = (sfCurrentTurnColor === 'white') ? 1 : -1;
+                var cpMatch = line.match(/score cp (-?\d+)/);
+                var mateMatch = line.match(/score mate (-?\d+)/);
+
+                if (mateMatch) {
+                    var matePly = parseInt(mateMatch[1], 10) * povSign;
+                    sfLastInfoEvalWhite = matePly > 0 ? 99 : -99;
+                    if (!isReviewMode) updateEvalBar(sfLastInfoEvalWhite, matePly);
+                } else if (cpMatch) {
+                    var cpWhite = (parseInt(cpMatch[1], 10) / 100.0) * povSign;
+                    sfLastInfoEvalWhite = cpWhite;
+                    if (!isReviewMode) updateEvalBar(cpWhite, null);
+                }
+                return;
+            }
+
+            // Parse final bestmove from Stockfish
+            if (line.indexOf('bestmove ') === 0) {
+                if (sfSearchTimer) {
+                    clearTimeout(sfSearchTimer);
+                    sfSearchTimer = null;
+                }
+                var parts = line.split(/\s+/);
+                var moveStr = parts[1];
+                var parsedMove = null;
+                if (moveStr && moveStr.length >= 4 && moveStr !== '(none)') {
+                    var fromSq = squareNameToIdx(moveStr.slice(0, 2));
+                    var toSq = squareNameToIdx(moveStr.slice(2, 4));
+                    var promo = moveStr.length >= 5 ? moveStr[4].toLowerCase() : 'q';
+                    if (fromSq !== -1 && toSq !== -1) {
+                        parsedMove = {
+                            from: fromSq,
+                            to: toSq,
+                            promo: promo,
+                            evalWhite: sfLastInfoEvalWhite
+                        };
+                    }
+                }
+                if (sfPendingCallback) {
+                    var cb = sfPendingCallback;
+                    sfPendingCallback = null;
+                    cb(parsedMove);
+                }
+            }
+        };
+
+        worker.onerror = function(err) {
+            console.warn('Stockfish worker error on ' + sourceLabel + ':', err);
+            if (sourceLabel.indexOf('Local') === 0) {
+                stockfishWorker = null;
+                sfReady = false;
+                tryLoadFallbackCDNStockfish();
+            }
+        };
+
+        worker.postMessage('uci');
+    }
+
+    function queryEngineBestMove(fenStr, boardArr, sideToMove, depth, callback, customSkill, customMovetime) {
+        initStockfishWorker();
+
+        var skillLvl = (typeof customSkill === 'number') ? customSkill : 20;
+        var moveTimeMs = customMovetime || Math.min(2200, Math.max(400, depth * 110));
+
+        if (sfReady && stockfishWorker) {
+            if (sfSearchTimer) clearTimeout(sfSearchTimer);
+            // Replace any stale callback safely
+            sfPendingCallback = callback;
+            sfCurrentTurnColor = sideToMove;
+            sfLastInfoEvalWhite = null;
+
+            stockfishWorker.postMessage('stop');
+            stockfishWorker.postMessage('setoption name Skill Level value ' + skillLvl);
+            stockfishWorker.postMessage('position fen ' + fenStr);
+            stockfishWorker.postMessage('go depth ' + depth + ' movetime ' + moveTimeMs);
+
+            // Safety timeout MUST be longer than movetime (+2500ms buffer) so 2800 never gets cut off!
+            sfSearchTimer = setTimeout(function() {
+                if (sfPendingCallback) {
+                    var cb = sfPendingCallback;
+                    sfPendingCallback = null;
+                    try { stockfishWorker.postMessage('stop'); } catch (e) {}
+                    var fb = findBestMoveFallback(boardArr, sideToMove, 4);
+                    cb(fb);
+                }
+            }, moveTimeMs + 2500);
+            return;
+        }
+
+        // Only used if stockfish.js is completely missing
+        setTimeout(function() {
+            var fb = findBestMoveFallback(boardArr, sideToMove, Math.min(4, depth));
+            callback(fb);
+        }, 50);
+    }
+
+    /* =========================================================================
+       UPGRADED AI MOVE EXECUTION (TRUE 2800 STOCKFISH STRENGTH)
+       ========================================================================= */
+    function requestAIMove() {
+        if (isGameOver || aiThinking || isEditorMode || isReviewMode) return;
+        aiThinking = true;
+        var aiSide = currentPlayer;
+        var prof = BOT_PROFILES[currentDifficulty] || BOT_PROFILES['1500'];
+        var searchDepth = prof.depth || 10;
+        var skillLvl = (prof.skill !== undefined) ? prof.skill : 15;
+        var moveTimeMs = prof.movetime || 1000;
+
+        // Short natural pause so UI renders your move cleanly before Stockfish searches
+        setTimeout(function() {
+            if (isGameOver || isEditorMode || isReviewMode) { aiThinking = false; return; }
+            var allMoves = getAllLegalMoveObjects(aiSide, board);
+            if (allMoves.length === 0) { aiThinking = false; return; }
+
+            // Nelson (1350) early Queen aggression personality
+            if (prof.style === 'queen_agro' && algebraicMoves.length <= 10) {
+                var qMoves = allMoves.filter(function(m) {
+                    return board[m.from] && board[m.from].toLowerCase() === 'q' &&
+                           getLowestAttackerValue(m.to, playerColor, board) === 0;
+                });
+                if (qMoves.length > 0 && Math.random() < 0.60) {
+                    var qPick = qMoves[Math.floor(Math.random() * qMoves.length)];
+                    aiThinking = false;
+                    executeMove(qPick.from, qPick.to, 'q', false);
+                    return;
+                }
+            }
+
+            // Only low-Elo bots (400-1350) have blunderRate > 0; 1500, 2000, and 2800 NEVER random-blunder
+            if (prof.blunderRate > 0 && Math.random() < prof.blunderRate) {
+                var poolSize = prof.blunderRate >= 0.4 ? Math.min(allMoves.length, 6) : Math.min(allMoves.length, 3);
+                var randPick = allMoves[Math.floor(Math.random() * poolSize)];
+                aiThinking = false;
+                executeMove(randPick.from, randPick.to, 'q', false);
+                return;
+            }
+
+            queryEngineBestMove(getBoardFEN(), board, aiSide, searchDepth, function(res) {
+                aiThinking = false;
+                if (isGameOver || currentPlayer !== aiSide) return;
+                if (res && getLegalMoves(res.from, board).indexOf(res.to) !== -1) {
+                    // Sync the latest Stockfish eval into the history log
+                    if (typeof res.evalWhite === 'number' && gameHistoryLog.length > 0) {
+                        gameHistoryLog[gameHistoryLog.length - 1].evalScore = res.evalWhite;
+                    }
+                    executeMove(res.from, res.to, res.promo || 'q', false);
+                } else {
+                    var fallback = allMoves[0];
+                    executeMove(fallback.from, fallback.to, 'q', false);
+                }
+            }, skillLvl, moveTimeMs);
+        }, 350);
+    }
+
+    /* =========================================================================
+       FIXED GEMINI 2.5 FLASH COACH (ZERO THINKING-TOKEN CUTOFF + ERROR TOASTS)
+       ========================================================================= */
+    var geminiCoachCache = {};
+    var geminiLastErrorShown = false;
+
+    function fetchGeminiCoachSpeech(prevFen, afterFen, movedColor, sanMove, classificationObj, bestSanHint, targetMoveIdx) {
+        var apiKey = (localStorage.getItem('chessGeminiApiKey') || '').trim();
+        if (!apiKey || !navigator.onLine || !classificationObj) return;
+
+        var cacheKey = prevFen + '__' + sanMove;
+        if (geminiCoachCache[cacheKey]) {
+            applyGeminiCoachResult(geminiCoachCache[cacheKey], classificationObj, targetMoveIdx);
+            return;
+        }
+
+        // Show subtle loading indicator on the badge so you know Gemini is being called
+        if (coachBadgeEl) {
+            coachBadgeEl.textContent = '⏳ ' + classificationObj.glyph + ' ' + classificationObj.label;
+        }
+
+        var promptText =
+            "You are a concise, encouraging Grandmaster chess coach speaking directly to the player. " +
+            "Position FEN before move: " + prevFen + ". " +
+            movedColor.toUpperCase() + " just played " + sanMove + " (" + classificationObj.label + "). " +
+            (bestSanHint && bestSanHint !== sanMove ? ("Engine best move was " + bestSanHint + ". ") : "") +
+            "Heuristic note: " + classificationObj.coach + " " +
+            "In 1 or 2 crisp sentences (max 32 words), explain the concrete tactical or positional reason why this move is " +
+            classificationObj.label.toLowerCase() + " and what to watch out for next. Plain text only, no markdown.";
+
+        var endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(apiKey);
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: promptText }] }],
+                generationConfig: {
+                    temperature: 0.4,
+                    maxOutputTokens: 220,
+                    // CRITICAL FIX FOR GEMINI 2.5 FLASH: Disable internal thinking budget so tokens aren't eaten before text output
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            })
+        })
+        .then(function(res) {
+            if (!res.ok) {
+                return res.json().then(function(errBody) {
+                    var msg = (errBody && errBody.error && errBody.error.message) ? errBody.error.message : ('HTTP ' + res.status);
+                    throw new Error(msg);
+                });
+            }
+            return res.json();
+        })
+        .then(function(data) {
+            var parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+            var textOut = '';
+            for (var i = 0; i < parts.length; i++) {
+                if (parts[i].text && !parts[i].thought) {
+                    textOut += parts[i].text;
+                }
+            }
+            textOut = textOut.replace(/[*_`#]/g, '').trim();
+            if (!textOut) throw new Error('Empty response from Gemini');
+
+            geminiCoachCache[cacheKey] = textOut;
+            classificationObj.coach = textOut;
+            classificationObj.geminiCachedSpeech = textOut;
+            applyGeminiCoachResult(textOut, classificationObj, targetMoveIdx);
+        })
+        .catch(function(err) {
+            console.warn('Gemini Coach API Error:', err.message || err);
+            if (!geminiLastErrorShown) {
+                geminiLastErrorShown = true;
+                showToast("⚠️ Gemini API: " + (err.message || "Check API Key in ⚙️ Settings"));
+            }
+            // Fall back cleanly to offline coach voice
+            setCoachBanner(classificationObj.glyph + ' ' + classificationObj.label, classificationObj.cls, classificationObj.coach, false);
+        });
+    }
+
+    function applyGeminiCoachResult(textOut, classificationObj, targetMoveIdx) {
+        var currentActiveIdx = isReviewMode ? (reviewIndex - 1) : (algebraicMoves.length - 1);
+        var isStillRelevant = (currentActiveIdx === targetMoveIdx) ||
+            (!isReviewMode && currentMode === 'cpu' && currentPlayer === playerColor && (algebraicMoves.length - 2) === targetMoveIdx);
+
+        if (isStillRelevant) {
+            var botSuffix = (!isReviewMode && currentMode === 'cpu' && currentPlayer === playerColor && algebraicMoves.length > targetMoveIdx + 1)
+                ? (' (Bot played ' + algebraicMoves[algebraicMoves.length - 1] + ')')
+                : '';
+            setCoachBanner(
+                '✨ ' + classificationObj.glyph + ' ' + classificationObj.label,
+                classificationObj.cls,
+                textOut + botSuffix,
+                false
+            );
+        }
+    }
 
     const ENDGAME_DRILLS = {
         kqk:      { fen: "8/8/8/4k3/8/8/8/3QK3 w - - 0 1", title: "King + Queen vs. King: Drive the enemy King to the edge and deliver mate." },
