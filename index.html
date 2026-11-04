@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="logo.svg" type="image/svg+xml">
     <meta name="theme-color" content="#0b0d13">
-    <meta name="description" content="Professional P2P multiplayer, Board Setter, OCR Scanner, Teacher Coach, and Stockfish-powered offline chess suite.">
+    <meta name="description" content="Professional P2P multiplayer, Board Setter, OCR Scanner, Gemini 2.5 Teacher Coach, and Stockfish-powered offline chess suite.">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
     
@@ -1190,6 +1190,10 @@
                     <option value="review">📊 Only in Review</option>
                 </select>
             </div>
+            <div class="setting-group">
+                <label>Gemini 2.5 Key:</label>
+                <input type="password" id="set-gemini-key" class="tray-input" placeholder="Free AI Studio Key (Optional)" style="max-width:58%; padding:5px 8px;">
+            </div>
             <div class="setting-group"><label>Time Control:</label>
                 <select id="set-time">
                     <option value="unlimited">Unlimited</option>
@@ -1599,6 +1603,7 @@
     var isEditorMode = false;
     var editorSelectedTool = 'P';
     var ocrSourceImage = null;
+    var geminiCoachAbortCtrl = null;
     /* =========================================================================
        TOAST NOTIFICATIONS, TABS & HELPERS
        ========================================================================= */
@@ -1627,13 +1632,13 @@
             selectedIdx = null;
             validMoves = [];
             document.getElementById('editor-turn-select').value = currentPlayer;
-            setCoachBanner(null, 'editor', 'Board Editor Active: Tap squares to place or erase pieces, or pick an Endgame Drill.');
+            setCoachBanner(null, 'editor', 'Board Editor Active: Tap squares to place or erase pieces, or pick an Endgame Drill.', true);
         }
         if (tabName === 'analysis') drawEvaluationGraph();
         updateUI();
     }
 
-    function setCoachBanner(badgeLabel, badgeCls, text) {
+    function setCoachBanner(badgeLabel, badgeCls, text, skipTTS) {
         if (badgeLabel) {
             coachBadgePill.style.display = 'inline-block';
             coachBadgePill.className = 'move-badge ' + (badgeCls || 'badge-best');
@@ -1642,7 +1647,9 @@
             coachBadgePill.style.display = 'none';
         }
         coachTextEl.textContent = text || '';
-        speakCoachMessage(text);
+        if (!skipTTS) {
+            speakCoachMessage(text);
+        }
     }
 
     function isBoardInverted() {
@@ -1835,7 +1842,7 @@
         updateEvalBar(startScore, null);
 
         switchTab('moves');
-        setCoachBanner('SETUP', 'badge-great', 'Custom position loaded. ' + (currentPlayer === 'white' ? 'White' : 'Black') + ' to move.');
+        setCoachBanner('SETUP', 'badge-great', 'Custom position loaded. ' + (currentPlayer === 'white' ? 'White' : 'Black') + ' to move.', true);
         startTimer();
         updateUI();
 
@@ -2022,12 +2029,15 @@
             return;
         }
         localStorage.setItem('chessGeminiApiKey', apiKey);
+        var setGemInp = document.getElementById('set-gemini-key');
+        if (setGemInp) setGemInp.value = apiKey;
+
         drawOcrPreview(true);
         var canvas = document.getElementById('ocr-canvas');
         var base64Data = canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
         drawOcrPreview(false);
 
-        showToast("Scanning chessboard with Gemini Vision...");
+        showToast("Scanning chessboard with Gemini 2.5 Vision...");
         try {
             var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey), {
                 method: 'POST',
@@ -2453,7 +2463,7 @@
         return (kIdx !== -1 && isSquareAttacked(kIdx, col === 'white' ? 'black' : 'white', b)) ? kIdx : -1;
     }
 
-        function getAlgebraic(f, t, p, isCap, promoPiece, customBoard) {
+    function getAlgebraic(f, t, p, isCap, promoPiece, customBoard) {
         if (!p) return "";
         var bRef = customBoard || board;
         if (p.toUpperCase() === 'K' && Math.abs(f - t) === 2) return t > f ? "O-O" : "O-O-O";
@@ -2925,7 +2935,7 @@
     var sfWatchdogTimer = null;
     var sfLastScoreWhitePov = 0;
     var sfLastMate = null;
-        var sfLastPv = '';
+    var sfLastPv = '';
     var sfSearchSide = 'white';
 
     function initStockfishWorker() {
@@ -3055,14 +3065,14 @@
             return;
         }
 
-        setCoachBanner('ENGINE', 'badge-best', 'Calculating best tactical continuation...');
+        setCoachBanner('ENGINE', 'badge-best', 'Calculating best tactical continuation...', true);
         queryEngineBestMove(getBoardFEN(), activeBoard, activeSide, 10, function(res) {
             if (!res) return;
             reviewBestFrom = res.from;
             reviewBestTo = res.to;
             var movingPiece = activeBoard[res.from] || 'P';
             var isCap = !!activeBoard[res.to];
-            var san = getAlgebraic(res.from, res.to, movingPiece, isCap, null);
+            var san = getAlgebraic(res.from, res.to, movingPiece, isCap, null, activeBoard);
             var evalStr = (res.scoreWhitePov >= 0 ? '+' : '') + res.scoreWhitePov.toFixed(2);
 
             updateEvalBar(res.scoreWhitePov, res.mate);
@@ -3071,7 +3081,7 @@
             var pvEl = document.getElementById('engine-line-text');
             if (pvEl) pvEl.textContent = pvText;
 
-            setCoachBanner('★ BEST', 'badge-best', 'Coach recommends for ' + (activeSide === 'white' ? 'White' : 'Black') + ': ' + san + ' (' + evalStr + ')');
+            setCoachBanner('★ BEST', 'badge-best', 'Coach recommends for ' + (activeSide === 'white' ? 'White' : 'Black') + ': ' + san + ' (' + evalStr + ')', false);
             renderArrows();
             updateUI();
         });
@@ -3091,7 +3101,7 @@
             threatFrom = res.from;
             threatTo = res.to;
             var p = board[res.from] || 'p';
-            var san = getAlgebraic(res.from, res.to, p, !!board[res.to], null);
+            var san = getAlgebraic(res.from, res.to, p, !!board[res.to], null, board);
             var pvEl = document.getElementById('engine-line-text');
             if (pvEl) pvEl.textContent = 'Opponent Threat: ' + san;
         }
@@ -3099,7 +3109,7 @@
     }
 
     /* =========================================================================
-       ACCURATE MOVE CLASSIFIER (NO FALSE BRILLIANTS) & TEACHER BOT ENGINE
+       ACCURATE MOVE CLASSIFIER, TEACHER BOT & GEMINI 2.5 FLASH COACH ENGINE
        ========================================================================= */
     function scoreToWinProb(scorePawns) {
         var cp = Math.max(-1500, Math.min(1500, scorePawns * 100));
@@ -3164,6 +3174,80 @@
         return algMove + '?! Slight inaccuracy — ' + (bestSan ? (bestSan + ' was a more active continuation.') : 'allows the opponent easier play.');
     }
 
+    async function fetchGeminiCoachSpeech(fenBefore, fenAfter, movedColor, algMove, classificationObj, bestSan, plyIndex) {
+        var apiKey = (localStorage.getItem('chessGeminiApiKey') || '').trim();
+        if (!apiKey || !navigator.onLine || !classificationObj) return;
+
+        if (classificationObj.geminiCachedSpeech) {
+            setCoachBanner(
+                '✨ ' + classificationObj.glyph + ' ' + classificationObj.label,
+                classificationObj.cls,
+                classificationObj.geminiCachedSpeech,
+                false
+            );
+            return;
+        }
+
+        if (geminiCoachAbortCtrl) {
+            try { geminiCoachAbortCtrl.abort(); } catch (e) {}
+        }
+        geminiCoachAbortCtrl = new AbortController();
+
+        var prompt = "You are Coach Dan, a friendly, sharp Chess.com Grandmaster teacher. " +
+            "The player (" + movedColor + ") just played " + algMove + " (classified as " + classificationObj.label + " " + classificationObj.glyph + "). " +
+            "Position FEN before move: " + fenBefore + ". " +
+            "Position FEN after move: " + fenAfter + ". " +
+            (bestSan && classificationObj.type !== 'best' && classificationObj.type !== 'brilliant'
+                ? ("The engine's best move was " + bestSan + ". ")
+                : "") +
+            "In 1 to 2 short, punchy sentences (max 28 words), explain to the player WHY " + algMove + " is " + classificationObj.label.toLowerCase() +
+            (bestSan && classificationObj.type !== 'best' ? (" and why " + bestSan + " is better") : "") +
+            ". Speak directly to the player ('You...'), no markdown, no bullet points, natural spoken English.";
+
+        try {
+            var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal: geminiCoachAbortCtrl.signal,
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.65,
+                        maxOutputTokens: 80
+                    }
+                })
+            });
+            if (!resp.ok) return;
+            var data = await resp.json();
+            var aiSpeech = data && data.candidates && data.candidates[0] &&
+                           data.candidates[0].content && data.candidates[0].content.parts &&
+                           data.candidates[0].content.parts[0].text;
+            if (!aiSpeech) return;
+
+            aiSpeech = aiSpeech.replace(/[*`_#]/g, '').replace(/\s+/g, ' ').trim();
+            classificationObj.geminiCachedSpeech = aiSpeech;
+            classificationObj.coach = aiSpeech;
+
+            var currentPly = isReviewMode ? (reviewIndex - 1) : (algebraicMoves.length - 1);
+            var isStillRelevant = (currentPly === plyIndex) ||
+                (!isReviewMode && currentMode === 'cpu' && currentPly === plyIndex + 1);
+
+            if (isStillRelevant) {
+                var botReplySuffix = (!isReviewMode && currentMode === 'cpu' && currentPly === plyIndex + 1)
+                    ? (' (Bot played ' + algebraicMoves[currentPly] + ')')
+                    : '';
+                setCoachBanner(
+                    '✨ ' + classificationObj.glyph + ' ' + classificationObj.label,
+                    classificationObj.cls,
+                    aiSpeech + botReplySuffix,
+                    false
+                );
+            }
+        } catch (err) {
+            // Silently retain offline Teacher explanation if offline or aborted
+        }
+    }
+
     function classifyMoveQuality(prevBoard, newBoard, movedColor, fromIdx, toIdx, algMove, prevEvalWhite, newEvalWhite, plyCount) {
         var moveSeq = algebraicMoves.join(' ');
         if (plyCount <= 10 && OPENINGS[moveSeq]) {
@@ -3192,7 +3276,7 @@
         var movedVal = PIECE_VALUES[movedPiece.toLowerCase()] || 1;
         var capturedPiece = prevBoard[toIdx] || '';
         var capVal = capturedPiece ? (PIECE_VALUES[capturedPiece.toLowerCase()] || 0) : 0;
-                var bestSan = prevBoard[bestFrom] ? getAlgebraic(bestFrom, bestTo, prevBoard[bestFrom], !!prevBoard[bestTo], null, prevBoard) : '';
+        var bestSan = prevBoard[bestFrom] ? getAlgebraic(bestFrom, bestTo, prevBoard[bestFrom], !!prevBoard[bestTo], null, prevBoard) : '';
 
         // Strict Brilliant (!!) verification: must be a genuine material sacrifice into an attacker
         var lowestEnemyAttacker = getLowestAttackerValue(toIdx, oppCol, newBoard);
@@ -3318,6 +3402,7 @@
             currentPlayer: currentPlayer,
             lastMoveFrom: lastMoveFrom,
             lastMoveTo: lastMoveTo,
+            fen: getBoardFEN(),
             algMove: algMove,
             evalScore: typeof evalScoreWhite === 'number' ? evalScoreWhite : staticEvaluateBoard(board),
             classification: classificationObj || null
@@ -3348,7 +3433,7 @@
 
         algebraicMoves.push(algMove);
 
-                var prevFrame = gameHistoryLog.length > 0 ? gameHistoryLog[gameHistoryLog.length - 1] : null;
+        var prevFrame = gameHistoryLog.length > 0 ? gameHistoryLog[gameHistoryLog.length - 1] : null;
         var prevBoard = prevFrame ? prevFrame.board : INITIAL_BOARD;
         var prevEval = prevFrame ? prevFrame.evalScore : 0;
         var newEval = staticEvaluateBoard(board);
@@ -3356,7 +3441,7 @@
             newEval = (movedCol === 'white') ? 99 : -99;
         }
 
-        // Temporarily restore previous castling & en-passant state so the reviewer evaluates prevBoard accurately
+        // Restore pre-move castling & en-passant state while classifying prevBoard
         var savedCastle = Object.assign({}, castlingRights);
         var savedEp = epSquare;
         if (prevFrame) {
@@ -3376,25 +3461,57 @@
 
         var avatarEl = document.getElementById('coach-avatar');
         var botProf = BOT_PROFILES[currentDifficulty] || BOT_PROFILES['1500'];
-        if (avatarEl) avatarEl.textContent = (currentMode === 'cpu') ? botProf.avatar : '🎓';
+        if (avatarEl) avatarEl.textContent = (currentMode === 'cpu' && !isMultiplayerActive) ? botProf.avatar : '🎓';
+
+        var hasGemKey = !!(localStorage.getItem('chessGeminiApiKey') || '').trim() && navigator.onLine;
+        var prevFenStr = (prevFrame && prevFrame.fen) ? prevFrame.fen : 'startpos';
+        var bestSanHint = (classification && classification.bestFrom !== undefined && prevBoard[classification.bestFrom])
+            ? getAlgebraic(classification.bestFrom, classification.bestTo, prevBoard[classification.bestFrom], !!prevBoard[classification.bestTo], null, prevBoard)
+            : '';
 
         if (wasRetry && retryGoal) {
             if (fromIdx === retryGoal.bestFrom && toIdx === retryGoal.bestTo) {
-                setCoachBanner('★ SOLVED!', 'badge-brilliant', 'Spot on! ' + algMove + ' is the strongest continuation.');
+                setCoachBanner('★ SOLVED!', 'badge-brilliant', 'Spot on! ' + algMove + ' is the strongest continuation.', false);
             } else {
-                setCoachBanner('✓ PLAYED', 'badge-good', 'You played ' + algMove + '. Click 🔄 Retry if you want another try!');
+                setCoachBanner('✓ PLAYED', 'badge-good', 'You played ' + algMove + '. Click 🔄 Retry if you want another try!', false);
             }
         } else if (liveCoachEnabled && classification) {
-            setCoachBanner(classification.glyph + ' ' + classification.label, classification.cls, classification.coach);
+            if (!isMultiplayerActive && currentMode === 'cpu') {
+                if (movedCol === playerColor) {
+                    // Show offline explanation immediately; if Gemini 2.5 is configured, let Gemini speak the upgraded version
+                    setCoachBanner(classification.glyph + ' ' + classification.label, classification.cls, classification.coach, hasGemKey);
+                    if (hasGemKey) {
+                        fetchGeminiCoachSpeech(prevFenStr, getBoardFEN(), movedCol, algMove, classification, bestSanHint, algebraicMoves.length - 1);
+                    }
                 } else {
-            var moveSeqStr = algebraicMoves.join(' ');
-            var exactOpening = OPENINGS[moveSeqStr] || '';
-            var moveLabel = 'Played ' + algMove;
-            setCoachBanner(
-                exactOpening ? '📖 BOOK' : null,
-                exactOpening ? 'badge-book' : null,
-                (exactOpening ? (exactOpening + ' (' + algMove + ') • ') : (moveLabel + ' • ')) + (nextCol === 'white' ? 'White' : 'Black') + ' to move'
-            );
+                    // Bot reply: keep the player's move lesson on screen and never interrupt TTS
+                    var prevHumanMc = moveClassifications.length >= 2 ? moveClassifications[moveClassifications.length - 2] : null;
+                    if (prevHumanMc) {
+                        var badgePrefix = prevHumanMc.geminiCachedSpeech ? '✨ ' : '';
+                        setCoachBanner(
+                            badgePrefix + prevHumanMc.glyph + ' ' + prevHumanMc.label,
+                            prevHumanMc.cls,
+                            prevHumanMc.coach + ' (Bot played ' + algMove + ')',
+                            true
+                        );
+                    } else {
+                        setCoachBanner(null, null, 'Bot opened with ' + algMove + ' • Your turn!', true);
+                    }
+                }
+            } else {
+                setCoachBanner(classification.glyph + ' ' + classification.label, classification.cls, classification.coach, hasGemKey);
+                if (hasGemKey) {
+                    fetchGeminiCoachSpeech(prevFenStr, getBoardFEN(), movedCol, algMove, classification, bestSanHint, algebraicMoves.length - 1);
+                }
+            }
+        } else {
+            // "Only in Review" mode: Stay quiet during live play (no move blabbering)
+            var exactOpening = OPENINGS[algebraicMoves.join(' ')] || '';
+            if (exactOpening) {
+                setCoachBanner('📖 BOOK', 'badge-book', exactOpening, true);
+            } else if (algebraicMoves.length <= 1) {
+                setCoachBanner(null, null, 'Coach muted for live play • Open 📊 Review anytime for full analysis.', true);
+            }
         }
 
         var repKey = getRepetitionKey();
@@ -3462,8 +3579,9 @@
         var prof = BOT_PROFILES[currentDifficulty] || BOT_PROFILES['1500'];
         var searchDepth = prof.depth || 4;
 
+        // 950ms natural thinking pause so player moves and Coach audio are never rushed
         setTimeout(function() {
-            if (isGameOver || isEditorMode) { aiThinking = false; return; }
+            if (isGameOver || isEditorMode || isReviewMode) { aiThinking = false; return; }
             var allMoves = getAllLegalMoveObjects(aiSide, board);
             if (allMoves.length === 0) { aiThinking = false; return; }
 
@@ -3500,7 +3618,7 @@
                     executeMove(fallback.from, fallback.to, 'q', false);
                 }
             });
-        }, 240);
+        }, 950);
     }
 
     function endGame(winner, reasonText) {
@@ -4040,11 +4158,30 @@
         if (mc) {
             reviewBestFrom = mc.bestFrom;
             reviewBestTo = mc.bestTo;
-            setCoachBanner(mc.glyph + ' ' + mc.label, mc.cls, mc.coach);
+            var hasGemKey = !!(localStorage.getItem('chessGeminiApiKey') || '').trim() && navigator.onLine;
+            var willFetchGem = hasGemKey && !mc.geminiCachedSpeech && idx >= 1 && reviewGameData[idx - 1];
+            var badgePrefix = mc.geminiCachedSpeech ? '✨ ' : '';
+            setCoachBanner(badgePrefix + mc.glyph + ' ' + mc.label, mc.cls, mc.coach, willFetchGem);
+            if (willFetchGem) {
+                var prevF = reviewGameData[idx - 1];
+                var pB = prevF.board;
+                var bSan = (mc.bestFrom !== undefined && pB[mc.bestFrom])
+                    ? getAlgebraic(mc.bestFrom, mc.bestTo, pB[mc.bestFrom], !!pB[mc.bestTo], null, pB)
+                    : '';
+                fetchGeminiCoachSpeech(
+                    prevF.fen || 'review-pos',
+                    frame.fen || getBoardFEN(),
+                    (idx % 2 === 1 ? 'white' : 'black'),
+                    frame.algMove,
+                    mc,
+                    bSan,
+                    idx - 1
+                );
+            }
         } else {
             reviewBestFrom = null;
             reviewBestTo = null;
-            setCoachBanner('START', 'badge-best', 'Initial position — use ◀ ▶ or arrow keys to step through moves.');
+            setCoachBanner('START', 'badge-best', 'Initial position — use ◀ ▶ or arrow keys to step through moves.', true);
         }
 
         updateEvalBar(frame.evalScore || 0, null);
@@ -4066,6 +4203,8 @@
             pieceIds = latest.pieceIds.slice();
             capturedWhite = latest.capturedWhite.slice();
             capturedBlack = latest.capturedBlack.slice();
+            if (latest.castlingRights) castlingRights = Object.assign({}, latest.castlingRights);
+            epSquare = latest.epSquare !== undefined ? latest.epSquare : null;
             currentPlayer = latest.currentPlayer;
             lastMoveFrom = latest.lastMoveFrom;
             lastMoveTo = latest.lastMoveTo;
@@ -4078,7 +4217,7 @@
     /* =========================================================================
        LIVE GAME CONTROLS: UNDO, DRAW, RESIGN, FEN, PGN & EXPANSION FEATURES
        ========================================================================= */
-        function rebuildPositionCountsFromHistory() {
+    function rebuildPositionCountsFromHistory() {
         positionCounts = {};
         var savedB = board.slice(), savedC = Object.assign({}, castlingRights), savedEp = epSquare, savedP = currentPlayer;
         for (var i = 0; i < gameHistoryLog.length; i++) {
@@ -4128,7 +4267,7 @@
         validMoves = [];
         rebuildPositionCountsFromHistory();
         updateEvalBar(restored.evalScore || 0, null);
-        setCoachBanner(null, null, 'Move taken back.');
+        setCoachBanner(null, null, 'Move taken back.', true);
         updateUI();
         drawEvaluationGraph();
     }
@@ -4199,7 +4338,7 @@
     }
 
     /* --- 1. RETRY MISTAKE / BLUNDER PUZZLE TRAINER --- */
-        function getRetryTargetHistoryIndex() {
+    function getRetryTargetHistoryIndex() {
         if (isReviewMode) {
             var rMc = moveClassifications[reviewIndex - 1];
             if (rMc && (rMc.type === 'inaccuracy' || rMc.type === 'mistake' || rMc.type === 'blunder')) {
@@ -4213,7 +4352,6 @@
         if (lastMc && (lastMc.type === 'inaccuracy' || lastMc.type === 'mistake' || lastMc.type === 'blunder')) {
             return lastIdx + 1;
         }
-        // In CPU mode, if the Bot just replied, check the player's move 1 ply earlier
         if (currentMode === 'cpu' && currentPlayer === playerColor && lastIdx >= 1) {
             var humanMc = moveClassifications[lastIdx - 1];
             if (humanMc && (humanMc.type === 'inaccuracy' || humanMc.type === 'mistake' || humanMc.type === 'blunder')) {
@@ -4223,10 +4361,9 @@
         return -1;
     }
 
-        function updateRetryButtonVisibility() {
+    function updateRetryButtonVisibility() {
         var btn = document.getElementById('btn-retry-mistake');
         if (!btn) return;
-        // Hide Retry button during live games if Coach is set to "Only in Review"
         if (!liveCoachEnabled && !isReviewMode) {
             btn.style.display = 'none';
             return;
@@ -4251,8 +4388,8 @@
             reviewBestFrom = retryPuzzleState.bestFrom;
             reviewBestTo = retryPuzzleState.bestTo;
             var p = board[reviewBestFrom] || 'P';
-            var san = getAlgebraic(reviewBestFrom, reviewBestTo, p, !!board[reviewBestTo], null);
-            setCoachBanner('★ SOLUTION', 'badge-best', 'The strongest move is ' + san + '. Play it on the board!');
+            var san = getAlgebraic(reviewBestFrom, reviewBestTo, p, !!board[reviewBestTo], null, board);
+            setCoachBanner('★ SOLUTION', 'badge-best', 'The strongest move is ' + san + '. Play it on the board!', false);
             retryPuzzleState.active = false;
             renderArrows();
             updateUI();
@@ -4298,7 +4435,7 @@
             badAlg: badFrame.algMove
         };
 
-        setCoachBanner('🎯 RETRY', 'badge-great', 'You played ' + badFrame.algMove + '. Find the stronger move on the board!');
+        setCoachBanner('🎯 RETRY', 'badge-great', 'You played ' + badFrame.algMove + '. Find the stronger move on the board!', false);
         updateUI();
         drawEvaluationGraph();
     }
@@ -4339,7 +4476,7 @@
         for (var i = 0; i < legal.length; i++) {
             var m = legal[i];
             var p = board[m.from];
-            var candSan = getAlgebraic(m.from, m.to, p, !!board[m.to], null);
+            var candSan = getAlgebraic(m.from, m.to, p, !!board[m.to], null, board);
             if (candSan === sanStr) {
                 executeMove(m.from, m.to, 'q', false);
                 return;
@@ -4359,6 +4496,7 @@
 
     function speakCoachMessage(text) {
         if (!voiceCoachTTSEnabled || !window.speechSynthesis || !text) return;
+        if (!liveCoachEnabled && !isReviewMode) return;
         try {
             window.speechSynthesis.cancel();
             var clean = text
@@ -4420,7 +4558,7 @@
 
         for (var i = 0; i < legal.length; i++) {
             var m = legal[i];
-            var san = getAlgebraic(m.from, m.to, board[m.from], !!board[m.to], null);
+            var san = getAlgebraic(m.from, m.to, board[m.from], !!board[m.to], null, board);
             var cleanSan = san.replace(/[+#]/g, '');
             if ((spoken.indexOf('castle') !== -1 && (cleanSan === 'O-O' || cleanSan === 'O-O-O')) ||
                 cleanSan.toLowerCase() === norm.toLowerCase() ||
@@ -4444,13 +4582,13 @@
         isGameOver = false;
         isReviewMode = false;
         switchTab('moves');
-        setCoachBanner('🎯 DRILL', 'badge-great', drill.title);
+        setCoachBanner('🎯 DRILL', 'badge-great', drill.title, false);
         showToast("Endgame Drill Loaded!");
         startTimer();
     }
 
     /* --- 5. FULL PGN IMPORTER & ANNOTATED PGN EXPORTER --- */
-            function importPGNGame() {
+    function importPGNGame() {
         var inp = document.getElementById('pgn-input');
         if (!inp || !inp.value.trim()) {
             showToast("Paste a PGN move list first!");
@@ -4471,8 +4609,10 @@
 
         var prevMode = currentMode;
         var prevSound = soundEnabled;
-        currentMode = 'pvp'; // Prevent CPU from firing mid-import
+        var prevCoach = liveCoachEnabled;
+        currentMode = 'pvp';
         soundEnabled = false;
+        liveCoachEnabled = false;
         initGame();
 
         var importedCount = 0;
@@ -4489,7 +4629,7 @@
             var matched = null;
             for (var i = 0; i < legal.length; i++) {
                 var m = legal[i];
-                var candSan = getAlgebraic(m.from, m.to, board[m.from], !!board[m.to], null).replace(/[+#]/g, '');
+                var candSan = getAlgebraic(m.from, m.to, board[m.from], !!board[m.to], null, board).replace(/[+#]/g, '');
                 if (candSan === targetSan) {
                     matched = m;
                     break;
@@ -4502,6 +4642,7 @@
 
         currentMode = prevMode;
         soundEnabled = prevSound;
+        liveCoachEnabled = prevCoach;
         playSound('move');
         inp.value = '';
         switchTab('analysis');
@@ -4509,7 +4650,6 @@
         drawEvaluationGraph();
         showToast("📥 Imported " + importedCount + " plies with full accuracy graph!");
     }
-
 
     function exportAnnotatedPGN() {
         var dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
@@ -4592,7 +4732,7 @@
         }
     }
 
-        function loadSavedStateObject(st) {
+    function loadSavedStateObject(st) {
         if (!st || !st.fen) return;
         parseFENPosition(st.fen);
         algebraicMoves = st.algebraicMoves || [];
@@ -4636,6 +4776,8 @@
         document.getElementById('set-sound').value = soundEnabled ? 'on' : 'off';
         var coachSel = document.getElementById('set-coach-mode');
         if (coachSel) coachSel.value = liveCoachEnabled ? 'on' : 'review';
+        var gemKeyInp = document.getElementById('set-gemini-key');
+        if (gemKeyInp) gemKeyInp.value = localStorage.getItem('chessGeminiApiKey') || '';
         settingsModal.style.display = 'flex';
     }
 
@@ -4651,6 +4793,8 @@
         soundEnabled = (document.getElementById('set-sound').value === 'on');
         var coachSel = document.getElementById('set-coach-mode');
         if (coachSel) liveCoachEnabled = (coachSel.value === 'on');
+        var gemKeyInp = document.getElementById('set-gemini-key');
+        if (gemKeyInp) localStorage.setItem('chessGeminiApiKey', gemKeyInp.value.trim());
 
         saveSettingsToStorage();
         settingsModal.style.display = 'none';
@@ -4942,7 +5086,7 @@
             for (var i = 0; i < allLegal.length; i++) {
                 var m = allLegal[i];
                 var p = board[m.from];
-                var san = getAlgebraic(m.from, m.to, p, !!board[m.to], null);
+                var san = getAlgebraic(m.from, m.to, p, !!board[m.to], null, board);
                 if (san === targetSan) {
                     board[m.to] = board[m.from];
                     board[m.from] = '';
@@ -5028,7 +5172,11 @@
         var avatarEl = document.getElementById('coach-avatar');
         if (avatarEl) avatarEl.textContent = (currentMode === 'cpu' && !isMultiplayerActive) ? botProf.avatar : '🎓';
 
-        setCoachBanner('READY', 'badge-best', 'Coach Ready: Make a move for live feedback, or use 📖 Opening Explorer below.');
+        if (liveCoachEnabled) {
+            setCoachBanner('READY', 'badge-best', 'Coach Ready: Make a move for live feedback, or use 📖 Opening Explorer below.', true);
+        } else {
+            setCoachBanner(null, null, 'Coach set to Review Mode • Play your game and click 📊 Review anytime.', true);
+        }
 
         if (isEditorMode) switchTab('moves');
         updateUI();
