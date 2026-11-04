@@ -1,15 +1,15 @@
-const CACHE_NAME = 'chess-master-v8.0';
+const CACHE_NAME = 'chess-master-v9.2';
 
 const CORE_ASSETS = [
     './',
     './index.html',
     './manifest.json',
     './logo.svg',
-    'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js'
+    './stockfish.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'
 ];
 
-// Install: Pre-cache core shell & engine scripts
+// Install: Pre-cache core shell & local repository stockfish.js
 self.addEventListener('install', function(event) {
     self.skipWaiting();
     event.waitUntil(
@@ -17,7 +17,7 @@ self.addEventListener('install', function(event) {
             return Promise.allSettled(
                 CORE_ASSETS.map(function(url) {
                     return cache.add(url).catch(function(err) {
-                        console.warn('Failed to pre-cache:', url, err);
+                        console.warn('Optional asset skipped:', url);
                     });
                 })
             );
@@ -25,7 +25,7 @@ self.addEventListener('install', function(event) {
     );
 });
 
-// Activate: Clean up outdated caches
+// Activate: Delete old chess-master-v8.0 cache immediately
 self.addEventListener('activate', function(event) {
     event.waitUntil(
         caches.keys().then(function(keys) {
@@ -42,18 +42,47 @@ self.addEventListener('activate', function(event) {
     );
 });
 
-// Fetch: Stale-While-Revalidate for local & CDN files, ignore WebRTC/PeerJS signaling API calls
+// Fetch: Network-First for HTML (so edits show up immediately), Cache-First for engine/assets
 self.addEventListener('fetch', function(event) {
     var req = event.request;
+
+    // Never intercept POST requests (such as Gemini 2.5 API calls)
     if (req.method !== 'GET') return;
 
     var url = new URL(req.url);
 
-    // Do not intercept live PeerJS WebSocket/signaling broker traffic
-    if (url.hostname.indexOf('peerjs.com') !== -1) return;
+    // Do not intercept live PeerJS or Google Gemini API traffic
+    if (url.hostname.indexOf('peerjs.com') !== -1 || url.hostname.indexOf('googleapis.com') !== -1) {
+        return;
+    }
 
+    // Network-First for HTML navigation so you never get stuck on old code
+    var isHtmlRequest = req.mode === 'navigate' ||
+                        url.pathname.endsWith('.html') ||
+                        url.pathname.endsWith('/');
+
+    if (isHtmlRequest) {
+        event.respondWith(
+            fetch(req).then(function(networkResponse) {
+                if (networkResponse && networkResponse.status === 200) {
+                    var resClone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(function(cache) {
+                        cache.put(req, resClone);
+                    });
+                }
+                return networkResponse;
+            }).catch(function() {
+                return caches.match(req).then(function(cached) {
+                    return cached || caches.match('./index.html');
+                });
+            })
+        );
+        return;
+    }
+
+    // Cache-First with background update for stockfish.js, icons, and PeerJS script
     event.respondWith(
-        caches.match(req, { ignoreSearch: true }).then(function(cachedResponse) {
+        caches.match(req).then(function(cachedResponse) {
             var networkFetch = fetch(req).then(function(networkResponse) {
                 if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
                     var resClone = networkResponse.clone();
@@ -63,10 +92,6 @@ self.addEventListener('fetch', function(event) {
                 }
                 return networkResponse;
             }).catch(function() {
-                // Offline fallback for navigation requests
-                if (req.mode === 'navigate') {
-                    return caches.match('./index.html');
-                }
                 return cachedResponse;
             });
 
