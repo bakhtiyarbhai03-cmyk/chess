@@ -2040,9 +2040,9 @@
         var base64Data = canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
         drawOcrPreview(false);
 
-        showToast("Scanning chessboard with Gemini 2.5 Vision...");
+        showToast("Scanning chessboard with Gemini 3.8 Vision...");
         try {
-            var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey), {
+            var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(apiKey), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2055,8 +2055,8 @@
                     }],
                     generationConfig: {
                         temperature: 0.1,
-                        maxOutputTokens: 120,
-                        thinkingConfig: { thinkingBudget: 0 }
+                        maxOutputTokens: 1024,
+                        thinkingConfig: { thinkingLevel: 'low' }
                     }
                 })
             });
@@ -2078,7 +2078,7 @@
         } catch (err) {
             showToast("Network/API error; running Offline Scan instead.");
             runOfflineCanvasOcr();
-        }    
+        }
     }
     
     /* =========================================================================
@@ -3256,7 +3256,7 @@
         return algMove + '?! Slight inaccuracy — ' + (bestSan ? (bestSan + ' was a more active continuation.') : 'allows the opponent easier play.');
     }
 
-    var geminiErrorShownOnce = false;
+        var geminiErrorShownOnce = false;
 
     async function fetchGeminiCoachSpeech(fenBefore, fenAfter, movedColor, algMove, classificationObj, bestSan, plyIndex) {
         var apiKey = (localStorage.getItem('chessGeminiApiKey') || '').trim();
@@ -3293,7 +3293,7 @@
             ". Speak directly to the player ('You...'), no markdown, no bullet points, natural spoken English.";
 
         try {
-            var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey), {
+            var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(apiKey), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 signal: geminiCoachAbortCtrl.signal,
@@ -3301,8 +3301,8 @@
                     contents: [{ role: 'user', parts: [{ text: prompt }] }],
                     generationConfig: {
                         temperature: 0.45,
-                        maxOutputTokens: 220,
-                        thinkingConfig: { thinkingBudget: 0 }
+                        maxOutputTokens: 1024,
+                        thinkingConfig: { thinkingLevel: 'low' }
                     }
                 })
             });
